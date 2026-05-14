@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Byudjet" %}{% endblock %}
+{% block page_title %}
+<span class="title-icon"><i class="ti ti-target"></i></span>
+{% if finance_scope == 'family' %}{% t "Oila byudjetlari" %}{% else %}{% t "Byudjet va Rejalashtirish" %}{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'budget_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i>{% t "Byudjet yaratish" %}</a>
+{% endblock %}
+
+{% block content %}
+{% t "O'chirilsinmi?" as confirm_delete %}
+<!-- Month nav -->
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:24px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 20px;">
+    <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-secondary btn-sm"><i class="ti ti-arrow-left"></i></a>
+    <div style="flex:1; text-align:center; font-size:18px; font-weight:700;">{{ month_name }}</div>
+    <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-secondary btn-sm"><i class="ti ti-arrow-right"></i></a>
+</div>
+
+{% include 'partials/ai_tips.html' %}
+
+{% if budget_data %}
+<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap:16px;">
+    {% for item in budget_data %}
+    {% with b=item.budget pct=item.percentage %}
+    <div class="card" style="position:relative; overflow:hidden;">
+        <!-- Color indicator -->
+        <div style="position:absolute; top:0; left:0; bottom:0; width:4px; background:{% if pct >= 90 %}var(--red){% elif pct >= 75 %}var(--yellow){% else %}var(--accent){% endif %};"></div>
+        
+        <div style="padding-left:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div>
+                    <div style="font-size:16px; font-weight:700;">{{ b.name }}</div>
+                    {% if b.category %}<div style="font-size:12px; color:var(--text-muted);">{{ b.category.icon|icon:"sm" }} {% tcat b.category.name %}</div>{% endif %}
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">{% t b.get_budget_type_display %}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:22px; font-weight:800; color:{% if pct >= 90 %}var(--red){% elif pct >= 75 %}var(--yellow){% else %}var(--accent){% endif %};">{{ pct }}%</div>
+                </div>
+            </div>
+
+            <div class="progress" style="margin-bottom:12px; height:10px;">
+                <div class="progress-bar" style="width:{{ pct }}%; background:{% if pct >= 90 %}linear-gradient(90deg,var(--red),#fb923c){% elif pct >= 75 %}linear-gradient(90deg,var(--yellow),#fb923c){% else %}linear-gradient(90deg,var(--accent),var(--accent2)){% endif %};"></div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:12px;">
+                <div>
+                    <div style="color:var(--text-muted);">{% if b.budget_type == 'expense' %}{% t "Sarflangan" %}{% else %}{% t "Tushgan" %}{% endif %}</div>
+                    <div style="font-weight:700; color:{% if b.budget_type == 'expense' %}var(--red){% else %}var(--green){% endif %};">
+                        {{ item.actual|floatformat:0 }} {{ b.currency }}
+                    </div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="color:var(--text-muted);">{% t "Qoldi" %}</div>
+                    <div style="font-weight:700; color:{% if item.remaining < 0 %}var(--red){% else %}var(--text){% endif %};">
+                        {{ item.remaining|floatformat:0 }} {{ b.currency }}
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="color:var(--text-muted);">{% t "Reja" %}</div>
+                    <div style="font-weight:700;">{{ b.amount|floatformat:0 }} {{ b.currency }}</div>
+                </div>
+            </div>
+
+            {% if pct >= 100 and b.budget_type == 'expense' %}
+            <div class="alert alert-danger" style="margin:0; padding:8px 12px; font-size:12px;">
+                <i class="ti ti-alert-triangle"></i> {% t "Byudjet limitidan oshib ketdi" %} {{ item.actual|floatformat:0|add:0 }} {% t "so'm" %}!
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'budget_delete' b.pk %}" onsubmit="return confirm('{{ confirm_delete|escapejs }}')" style="margin-top:10px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm"><i class="ti ti-trash"></i>{% t "O'chirish" %}</button>
+            </form>
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon"><i class="ti ti-target"></i></div>
+        <div class="empty-state-title">{% t "Byudjet yo'q" %}</div>
+        <div class="empty-state-desc">{{ month_prompt }}</div>
+        <a href="{% url 'budget_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i>{% t "Yaratish" %}</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

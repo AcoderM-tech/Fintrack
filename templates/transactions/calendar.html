@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load core_tags %}
+{% block title %}{% t "Kalendar" %}{% endblock %}
+{% block page_title %}<span class="title-icon"><i class="ti ti-calendar"></i></span> {% t "Kalendar" %}{% endblock %}
+
+{% block content %}
+<div class="grid-2" style="align-items:start;">
+    <div class="card">
+        <div class="card-title"><i class="ti ti-calendar"></i>{% t "Tranzaksiyalar kalendari" %}</div>
+        <div class="calendar-header">
+            <a class="cal-nav" href="?year={{ prev_year }}&month={{ prev_month }}" aria-label="{% t "Oldingi oy" %}">
+                <i class="ti ti-chevron-left"></i>
+            </a>
+            <div class="calendar-title">{{ month_name }}</div>
+            <a class="cal-nav" href="?year={{ next_year }}&month={{ next_month }}" aria-label="{% t "Keyingi oy" %}">
+                <i class="ti ti-chevron-right"></i>
+            </a>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+            <div class="cal-weekday">{% t "Du" %}</div>
+            <div class="cal-weekday">{% t "Se" %}</div>
+            <div class="cal-weekday">{% t "Cho" %}</div>
+            <div class="cal-weekday">{% t "Pay" %}</div>
+            <div class="cal-weekday">{% t "Ju" %}</div>
+            <div class="cal-weekday">{% t "Sha" %}</div>
+            <div class="cal-weekday">{% t "Ya" %}</div>
+
+            {% for week in calendar %}
+                {% for day in week %}
+                    {% if day %}
+                        {% with day_data=days_data|get_item:day %}
+                        <button type="button" class="cal-day{% if day == today.day and year == today.year and month == today.month %} is-today{% endif %}"
+                                data-date="{{ year }}-{{ month|stringformat:'02d' }}-{{ day|stringformat:'02d' }}">
+                            <div class="cal-day-num">{{ day }}</div>
+                            {% if day_data %}
+                                <div class="cal-day-sums">
+                                    {% if day_data.income %}
+                                        <div class="cal-sum income">+{{ day_data.income|floatformat:0 }}</div>
+                                    {% endif %}
+                                    {% if day_data.expense %}
+                                        <div class="cal-sum expense">-{{ day_data.expense|floatformat:0 }}</div>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="cal-day-sums empty">-</div>
+                            {% endif %}
+                        </button>
+                        {% endwith %}
+                    {% else %}
+                        <div class="cal-day is-empty"></div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title"><i class="ti ti-list-details"></i>{% t "Tanlangan kun" %}</div>
+        <div id="dayTitle" style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+            {% t "Kun tanlang" %}
+        </div>
+        <div id="dayTransactions"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ transactions_data|json_script:"tx-data" }}
+<script>
+(function() {
+    const dataEl = document.getElementById('tx-data');
+    const txs = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
+    const byDate = {};
+    txs.forEach(t => {
+        if (!byDate[t.date]) byDate[t.date] = [];
+        byDate[t.date].push(t);
+    });
+
+    const dayTitle = document.getElementById('dayTitle');
+    const dayTransactions = document.getElementById('dayTransactions');
+    const dayButtons = Array.from(document.querySelectorAll('.cal-day[data-date]'));
+
+    function escapeHtml(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function fmtAmount(n) {
+        if (typeof formatNum === 'function') return formatNum(n);
+        return Math.round(n).toString();
+    }
+
+    const emptyDayText = "{% t "Bu kunda tranzaksiya yo'q" %}";
+    const fallbackTitle = "{% t "Tranzaksiya" %}";
+
+    function renderDay(dateStr) {
+        if (!dayTitle || !dayTransactions) return;
+        dayTitle.textContent = dateStr;
+        const items = byDate[dateStr] || [];
+        if (!items.length) {
+            dayTransactions.innerHTML = `<div class="empty-state" style="padding:16px;">${emptyDayText}</div>`;
+            return;
+        }
+        dayTransactions.innerHTML = items.map(t => {
+            const color = t.type === 'income' ? 'var(--green)' : (t.type === 'expense' ? 'var(--red)' : '#60a5fa');
+            const sign = t.type === 'income' ? '+' : (t.type === 'expense' ? '-' : '');
+            const title = escapeHtml(t.category || fallbackTitle);
+            const desc = escapeHtml(t.description || '');
+            const currency = escapeHtml(t.currency || 'UZS');
+            return `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; background:var(--surface2);">
+                    <div>
+                        <div style="font-size:13px; font-weight:600;">${title}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">${desc}</div>
+                    </div>
+                    <div style="font-weight:700; color:${color};">${sign}${fmtAmount(t.amount)} ${currency}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function selectDay(btn) {
+        dayButtons.forEach(b => b.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+        renderDay(btn.getAttribute('data-date'));
+    }
+
+    dayButtons.forEach(btn => {
+        btn.addEventListener('click', () => selectDay(btn));
+    });
+
+    const todayStr = '{{ today|date:"Y-m-d" }}';
+    let initial = dayButtons.find(b => b.dataset.date === todayStr);
+    if (!initial) {
+        initial = dayButtons.find(b => (byDate[b.dataset.date] || []).length > 0);
+    }
+    if (!initial && dayButtons.length) initial = dayButtons[0];
+    if (initial) selectDay(initial);
+})();
+</script>
+{% endblock %}

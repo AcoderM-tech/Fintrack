@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Statistika" %}{% endblock %}
+{% block page_title %}
+<span class="title-icon"><i class="ti ti-chart-line"></i></span>
+{% if finance_scope == 'family' %}Oila tahlili{% else %}Statistika va Tahlil{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if finance_scope == 'family' and family_memberships and family_memberships|length > 1 %}
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><i class="ti ti-users-group"></i>{% t "Oila guruhini tanlash" %}</div>
+    <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input type="hidden" name="scope" value="family">
+        <input type="hidden" name="period" value="{{ period }}">
+        <input type="hidden" name="year" value="{{ year }}">
+        <input type="hidden" name="month" value="{{ month }}">
+        <select name="family_id" class="form-control" style="max-width:260px;" onchange="this.form.submit()">
+            {% for m in family_memberships %}
+            <option value="{{ m.family.id }}" {% if active_family and active_family.id == m.family.id %}selected{% endif %}>
+                {{ m.family.name }}
+                (
+                {% if m.user_id == m.family.created_by_id %}
+                    {% if m.role == 'son' or m.role == 'daughter' %}{% t "Bosh" %}{% else %}{% t m.get_role_display %}{% endif %}
+                {% else %}
+                    {% t m.get_role_display %}
+                {% endif %}
+                )
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+{% endif %}
+
+{% if finance_scope == 'family' and active_family %}
+<div class="alert alert-info" style="margin-bottom:16px;">
+    Oila: <strong>{{ active_family.name }}</strong>{% if family_role_label %} (Sizning rolingiz: {{ family_role_label }}){% endif %}
+</div>
+{% endif %}
+
+<!-- Period filter -->
+<div class="card" style="margin-bottom:20px;">
+    <form method="get" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div class="tabs" style="margin:0; flex:1; min-width:300px;">
+            <a href="?period=daily&year={{ year }}&month={{ month }}{% if finance_scope == 'family' and active_family %}&scope=family&family_id={{ active_family.id }}{% endif %}" class="tab-btn {% if period == 'daily' %}active{% endif %}" style="text-decoration:none; text-align:center; display:block;">{% t "Kunlik" %}</a>
+            <a href="?period=weekly&year={{ year }}&month={{ month }}{% if finance_scope == 'family' and active_family %}&scope=family&family_id={{ active_family.id }}{% endif %}" class="tab-btn {% if period == 'weekly' %}active{% endif %}" style="text-decoration:none; text-align:center; display:block;">{% t "Haftalik" %}</a>
+            <a href="?period=monthly&year={{ year }}&month={{ month }}{% if finance_scope == 'family' and active_family %}&scope=family&family_id={{ active_family.id }}{% endif %}" class="tab-btn {% if period == 'monthly' %}active{% endif %}" style="text-decoration:none; text-align:center; display:block;">{% t "Oylik" %}</a>
+            <a href="?period=yearly&year={{ year }}&month={{ month }}{% if finance_scope == 'family' and active_family %}&scope=family&family_id={{ active_family.id }}{% endif %}" class="tab-btn {% if period == 'yearly' %}active{% endif %}" style="text-decoration:none; text-align:center; display:block;">{% t "Yillik" %}</a>
+        </div>
+        {% if finance_scope == 'family' and active_family %}
+        <input type="hidden" name="scope" value="family">
+        <input type="hidden" name="family_id" value="{{ active_family.id }}">
+        {% endif %}
+        {% if period == 'monthly' %}
+        <div style="display:flex; gap:8px; align-items:center;">
+            <select name="month" class="form-control" style="width:auto;" onchange="this.form.submit()">
+                {% for m in "1,2,3,4,5,6,7,8,9,10,11,12"|split:"," %}
+                <option value="{{ m }}" {% if month == m|add:0 %}selected{% endif %}>{{ m }} - {% t "oy" %}</option>
+                {% endfor %}
+            </select>
+            <input type="hidden" name="period" value="monthly">
+            <input type="hidden" name="year" value="{{ year }}">
+        </div>
+        {% endif %}
+        {% if period == 'yearly' %}
+        <div>
+            <input type="number" name="year" class="form-control" style="width:100px;" value="{{ year }}" onchange="this.form.submit()">
+            <input type="hidden" name="period" value="yearly">
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+{% if family_stats_blocked %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon"><i class="ti ti-shield-lock"></i></div>
+        <div class="empty-state-title">{% t "Oilaviy statistika faqat ota-onalar uchun mavjud." %}</div>
+        <div class="empty-state-desc">{% t "Siz faqat o'zingizning shaxsiy moliyaviy ma'lumotlaringizni ko'ra olasiz." %}</div>
+    </div>
+</div>
+{% else %}
+
+{% include 'partials/ai_tips.html' %}
+
+{% if ai_finance %}
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><i class="ti ti-robot"></i>{% t "AI moliyaviy xulosa" %}</div>
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+        <div style="padding:12px 16px; border:1px solid var(--border); border-radius:12px; background:var(--surface2); min-width:180px;">
+            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">{% t "Moliyaviy sog'liq" %}</div>
+            <div style="font-size:24px; font-weight:800;">{{ ai_finance.health_score }}/100</div>
+            <div style="font-size:11px; color:var(--text-muted);">{% t ai_finance.health_label %}</div>
+        </div>
+        {% if ai_finance.subscriptions %}
+        <div style="padding:12px 16px; border:1px solid var(--border); border-radius:12px; background:var(--surface2); min-width:180px;">
+            <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">{% t "Obunalar" %}</div>
+            <div style="font-size:18px; font-weight:700;">{{ ai_finance.subscriptions|length }} ta</div>
+            <div style="font-size:11px; color:var(--text-muted);">{% t "Aniqlangan" %}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if ai_finance.health_ai_summary %}
+        <div class="alert alert-info" style="margin-bottom:12px;">
+            <i class="ti ti-robot"></i> {{ ai_finance.health_ai_summary }}
+        </div>
+    {% endif %}
+
+    {% if ai_finance.patterns %}
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">{% t "Trend va patternlar" %}</div>
+        {% for item in ai_finance.patterns %}
+            <div class="alert alert-info" style="margin-bottom:8px;"><i class="ti ti-trending-up"></i> {{ item }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if ai_finance.overspending %}
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin:12px 0 8px;">{% t "Xavfli xarajatlar" %}</div>
+        {% for item in ai_finance.overspending %}
+            <div class="alert alert-warning" style="margin-bottom:8px;"><i class="ti ti-alert-triangle"></i> {{ item }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if ai_finance.advice %}
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin:12px 0 8px;">{% t "Tavsiyalar" %}</div>
+        {% for item in ai_finance.advice %}
+            <div class="alert alert-success" style="margin-bottom:8px;"><i class="ti ti-bulb"></i> {{ item }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if ai_finance.subscriptions %}
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin:12px 0 8px;">{% t "Obunalar ro'yxati" %}</div>
+        {% for item in ai_finance.subscriptions %}
+            <div class="alert alert-info" style="margin-bottom:8px;"><i class="ti ti-repeat"></i> {{ item }}</div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Summary stats -->
+<div class="stats-grid" style="margin-bottom:24px;">
+    <div class="stat-card green">
+        <div class="stat-label">{% t "Umumiy daromad" %}</div>
+        <div class="stat-value amount-green">+{{ total_income|floatformat:0 }}</div>
+        <div class="stat-icon"><i class="ti ti-trending-up"></i></div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">{% t "Umumiy xarajat" %}</div>
+        <div class="stat-value amount-red">-{{ total_expense|floatformat:0 }}</div>
+        <div class="stat-icon"><i class="ti ti-trending-down"></i></div>
+    </div>
+    <div class="stat-card {% if net >= 0 %}green{% else %}red{% endif %}">
+        <div class="stat-label">{% t "Sof qoldiq" %}</div>
+        <div class="stat-value {% if net >= 0 %}amount-green{% else %}amount-red{% endif %}">
+            {% if net >= 0 %}+{% endif %}{{ net|floatformat:0 }}
+        </div>
+        <div class="stat-icon"><i class="ti ti-scale"></i></div>
+    </div>
+</div>
+
+<!-- Trend chart -->
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><i class="ti ti-chart-line"></i> Trend ({{ date_from|date:"d.m.Y" }} - {{ date_to|date:"d.m.Y" }})</div>
+    <canvas id="trendChart" height="120"></canvas>
+</div>
+
+<div class="grid-2">
+    <!-- Expense pie -->
+    <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-down"></i>{% t "Xarajatlar - Kategoriya bo'yicha" %}</div>
+        <canvas id="expensePie" height="200" style="max-width:220px; margin:0 auto;"></canvas>
+        <div style="margin-top:16px;">
+            {% for cat in cat_expense %}
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <div style="width:10px; height:10px; border-radius:50%; background:{{ cat.category__color|default:'#64748b' }}; flex-shrink:0;"></div>
+                <div style="flex:1; font-size:13px;">{{ cat.category__icon|default:'tag'|icon:"sm" }} {% with cname=cat.category__name|default:other_label %}{% tcat cname %}{% endwith %}</div>
+                <div style="font-size:13px; font-weight:600; color:var(--red);">{{ cat.total|floatformat:0 }}</div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:20px;"><div>{% t "Ma'lumot yo'q" %}</div></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Income pie -->
+    <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-up"></i>{% t "Daromadlar - Kategoriya bo'yicha" %}</div>
+        <canvas id="incomePie" height="200" style="max-width:220px; margin:0 auto;"></canvas>
+        <div style="margin-top:16px;">
+            {% for cat in cat_income %}
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <div style="width:10px; height:10px; border-radius:50%; background:{{ cat.category__color|default:'#10b981' }}; flex-shrink:0;"></div>
+                <div style="flex:1; font-size:13px;">{{ cat.category__icon|default:'tag'|icon:"sm" }} {% with cname=cat.category__name|default:other_label %}{% tcat cname %}{% endwith %}</div>
+                <div style="font-size:13px; font-weight:600; color:var(--green);">{{ cat.total|floatformat:0 }}</div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="padding:20px;"><div>{% t "Ma'lumot yo'q" %}</div></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <div class="card-title"><i class="ti ti-scale"></i>{% t "Kategoriya bo'yicha solishtirish" %}</div>
+    {% if cat_compare %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{% t "Kategoriya" %}</th>
+                    <th>{% t "Xarajat" %}</th>
+                    <th>{% t "Daromad" %}</th>
+                    <th style="text-align:right;">{% t "Net" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in cat_compare %}
+                <tr>
+                    <td>{{ row.icon|default:'tag'|icon:"sm" }} {% tcat row.name %}</td>
+                    <td style="color:var(--red);">-{{ row.expense|floatformat:0 }}</td>
+                    <td style="color:var(--green);">+{{ row.income|floatformat:0 }}</td>
+                    <td style="text-align:right; font-weight:700; color:{% if row.net >= 0 %}var(--green){% else %}var(--red){% endif %};">
+                        {% if row.net >= 0 %}+{% endif %}{{ row.net|floatformat:0 }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:20px;"><div>{% t "Ma'lumot yo'q" %}</div></div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if not family_stats_blocked %}
+<script>
+const chartData = {{ chart_data_json|safe }};
+const pieData = {{ pie_data_json|safe }};
+const incomePieData = {{ income_pie_json|safe }};
+
+// Trend chart
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: chartData.map(d => d.date),
+        datasets: [
+            {
+                label: '{% t "Daromad" %}',
+                data: chartData.map(d => d.income),
+                borderColor: '#22c55e',
+                backgroundColor: 'rgba(34,197,94,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                borderWidth: 2,
+            },
+            {
+                label: '{% t "Xarajat" %}',
+                data: chartData.map(d => d.expense),
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239,68,68,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                borderWidth: 2,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { labels: { color: '#8888aa', font: { family: 'Plus Jakarta Sans' } } },
+        },
+        scales: {
+            x: { grid: { color: 'rgba(42,42,58,0.5)' }, ticks: { color: '#94a3b8', maxTicksLimit: 15 } },
+            y: { grid: { color: 'rgba(42,42,58,0.5)' }, ticks: { color: '#94a3b8' } },
+        }
+    }
+});
+
+// Expense pie
+if (pieData.length) {
+    new Chart(document.getElementById('expensePie').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: pieData.map(d => d.name),
+            datasets: [{
+                data: pieData.map(d => d.value),
+                backgroundColor: pieData.map(d => d.color + 'cc'),
+                borderColor: pieData.map(d => d.color),
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            cutout: '65%',
+        }
+    });
+}
+
+// Income pie
+if (incomePieData.length) {
+    new Chart(document.getElementById('incomePie').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: incomePieData.map(d => d.name),
+            datasets: [{
+                data: incomePieData.map(d => d.value),
+                backgroundColor: incomePieData.map(d => d.color + 'cc'),
+                borderColor: incomePieData.map(d => d.color),
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            cutout: '65%',
+        }
+    });
+}
+</script>
+{% endif %}
+{% endblock %}

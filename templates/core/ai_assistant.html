@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}{% t "AI Yordamchi" %}{% endblock %}
+{% block page_title %}<span class="title-icon"><i class="ti ti-sparkles"></i></span> {% t "AI Yordamchi" %}{% endblock %}
+
+{% block content %}
+{% t "Byudjetlarimni tahlil qilib, qisqa reja yozib bering." as prompt_budget %}
+{% t "Eng ko'p xarajat qilayotgan kategoriyalarim bo'yicha tavsiya bering." as prompt_top_categories %}
+{% t "Qarz va haqdorliklar bo'yicha reja tuzishda yordam bering." as prompt_debts %}
+{% t "Jamg'arma ulushini qanday oshirsam bo'ladi?" as prompt_savings %}
+<div class="grid-2">
+    <div>
+        {% include 'partials/ai_tips.html' %}
+
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title"><i class="ti ti-chart-dots-3"></i>{% t "Qisqa tahlil" %}</div>
+            <div style="display:grid; gap:10px; font-size:13px; color:var(--text-muted);">
+                <div style="display:flex; justify-content:space-between;"><span>{% t "Umumiy balans" %}</span><span style="color:var(--text); font-weight:600;">{{ ai_context.total_balance|floatformat:0 }} UZS</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>{% t "Bu oy daromad" %}</span><span style="color:var(--green); font-weight:600;">+{{ ai_context.monthly_income|floatformat:0 }} UZS</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>{% t "Bu oy xarajat" %}</span><span style="color:var(--red); font-weight:600;">-{{ ai_context.monthly_expense|floatformat:0 }} UZS</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>{% t "Sof qoldiq" %}</span><span style="font-weight:600;">{{ ai_context.net|floatformat:0 }} UZS</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>{% t "Top kategoriya" %}</span><span style="font-weight:600;">{{ ai_context.top_expense_category|default:"-" }}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>{% t "Byudjetlar (yaqin/oshgan)" %}</span><span style="font-weight:600;">{{ ai_context.budgets_near_limit }}/{{ ai_context.budgets_over_limit }}</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>{% t "Muddati o'tgan qarzlar" %}</span><span style="font-weight:600;">{{ ai_context.overdue_debts }}</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="ti ti-bolt"></i>{% t "Tezkor savollar" %}</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="presetMsg('{{ prompt_budget|escapejs }}')">{% t "Byudjet tahlili" %}</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="presetMsg('{{ prompt_top_categories|escapejs }}')">{% t "Xarajatlar" %}</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="presetMsg('{{ prompt_debts|escapejs }}')">{% t "Qarzlar" %}</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="presetMsg('{{ prompt_savings|escapejs }}')">{% t "Jamg'arma" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div class="card-title" style="margin:0;"><i class="ti ti-message-2"></i>{% t "AI bilan suhbat" %}</div>
+            <span id="chatSource" data-openai-label="{{ openai_label }}" class="badge {% if ai_provider == 'groq' %}badge-green{% elif ai_provider == 'openai' %}badge-purple{% elif ai_provider == 'anthropic' %}badge-blue{% elif ai_provider == 'gemini' %}badge-blue{% else %}badge-yellow{% endif %}" style="font-size:10px;">
+                {% if ai_provider_online %}{{ ai_provider_label }}{% else %}{% t "Offline" %}{% endif %}
+            </span>
+        </div>
+
+        <div id="chatList" style="flex:1; min-height:360px; max-height:480px; overflow:auto; display:flex; flex-direction:column; gap:12px; padding:4px 12px 8px 4px; scrollbar-gutter:stable;">
+            {% if chat_history %}
+                {% for msg in chat_history %}
+                <div style="display:flex; {% if msg.role == 'user' %}justify-content:flex-end{% else %}justify-content:flex-start{% endif %};">
+                    <div style="max-width:78%; padding:10px 12px; border-radius:14px; font-size:13px; line-height:1.55; white-space:pre-wrap; word-break:break-word; {% if msg.role == 'user' %}background:rgba(59,130,246,.18); border:1px solid rgba(59,130,246,.35);{% else %}background:rgba(15,23,42,.7); border:1px solid var(--border);{% endif %}">
+                        {{ msg.text }}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="padding:28px;">
+                    <div class="empty-state-icon"><i class="ti ti-sparkles"></i></div>
+                    <div class="empty-state-title">{% t "Suhbatni boshlang" %}</div>
+                    <div class="empty-state-desc">{% t "Savol yozing - AI yordam beradi." %}</div>
+                </div>
+            {% endif %}
+        </div>
+
+        <form id="aiChatForm" style="display:flex; gap:8px; align-items:center;">
+            {% csrf_token %}
+            <input type="text" id="chatInput" class="form-control" style="flex:1; min-width:0;" placeholder="{% t "Savolingizni yozing..." %}" autocomplete="off">
+            <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i>{% t "Yuborish" %}</button>
+        </form>
+        <div id="chatStatus" style="font-size:11px; color:var(--text-muted);"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chatList = document.getElementById('chatList');
+const chatInput = document.getElementById('chatInput');
+const chatForm = document.getElementById('aiChatForm');
+const chatSource = document.getElementById('chatSource');
+const chatStatus = document.getElementById('chatStatus');
+const csrfToken = '{{ csrf_token }}';
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function appendMessage(text, role) {
+    if (!chatList) return;
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex';
+    wrap.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
+    const bubble = document.createElement('div');
+    bubble.style.maxWidth = '78%';
+    bubble.style.padding = '10px 12px';
+    bubble.style.borderRadius = '14px';
+    bubble.style.fontSize = '13px';
+    bubble.style.lineHeight = '1.55';
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.style.wordBreak = 'break-word';
+    if (role === 'user') {
+        bubble.style.background = 'rgba(59,130,246,.18)';
+        bubble.style.border = '1px solid rgba(59,130,246,.35)';
+    } else {
+        bubble.style.background = 'rgba(15,23,42,.7)';
+        bubble.style.border = '1px solid var(--border)';
+    }
+    bubble.innerHTML = escapeHtml(text);
+    wrap.appendChild(bubble);
+    chatList.appendChild(wrap);
+    chatList.scrollTop = chatList.scrollHeight;
+}
+
+function presetMsg(text) {
+    if (chatInput) {
+        chatInput.value = text;
+        chatInput.focus();
+    }
+}
+
+chatForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+    appendMessage(text, 'user');
+    chatInput.value = '';
+
+    const typing = document.createElement('div');
+    typing.style.display = 'flex';
+    typing.style.justifyContent = 'flex-start';
+    typing.innerHTML = '<div style="max-width:78%; padding:10px 12px; border-radius:14px; font-size:13px; background:rgba(15,23,42,.7); border:1px solid var(--border);">...</div>';
+    chatList.appendChild(typing);
+    chatList.scrollTop = chatList.scrollHeight;
+
+    const formData = new FormData();
+    formData.append('message', text);
+
+    try {
+        const res = await fetch("{% url 'ai_chat' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken },
+            body: formData
+        });
+        const data = await res.json();
+        typing.remove();
+        if (data.reply) {
+            appendMessage(data.reply, 'assistant');
+        } else {
+            appendMessage('{% t "Javobda xatolik yuz berdi." %}', 'assistant');
+        }
+        if (data.source && chatSource) {
+            if (data.source === 'groq') {
+                chatSource.textContent = 'Groq';
+                chatSource.className = 'badge badge-green';
+            } else if (data.source === 'openai') {
+                chatSource.textContent = chatSource.dataset.openaiLabel || 'ChatGPT';
+                chatSource.className = 'badge badge-purple';
+            } else if (data.source === 'anthropic') {
+                chatSource.textContent = 'Claude';
+                chatSource.className = 'badge badge-blue';
+            } else if (data.source === 'gemini') {
+                chatSource.textContent = 'Gemini Flash 1.5';
+                chatSource.className = 'badge badge-blue';
+            } else {
+                chatSource.textContent = '{% t "Offline" %}';
+                chatSource.className = 'badge badge-yellow';
+            }
+        }
+        if (chatStatus) {
+            chatStatus.textContent = data.error ? `{% t "Ulanish xatosi" %}: ${data.error}` : '';
+        }
+    } catch (err) {
+        typing.remove();
+        appendMessage('{% t "Ulanishda muammo yuz berdi." %}', 'assistant');
+    }
+});
+</script>
+{% endblock %}

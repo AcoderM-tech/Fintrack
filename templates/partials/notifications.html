@@ -1,0 +1,10 @@
+{% if menu_notifications %}
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><span class="title-icon"><i class="ti ti-bell"></i></span>{% t "Bildirishnomalar" %}</div>
+    {% for n in menu_notifications %}
+        <div class="alert alert-{{ n.level }}" style="margin-bottom:8px;">
+            <strong>{{ n.display_title|default:n.title }}</strong> &mdash; {{ n.display_message|default:n.message }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}

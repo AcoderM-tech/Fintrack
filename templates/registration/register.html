@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta name="view-transition" content="same-origin">
+    <script>
+        (function() {
+            const dir = sessionStorage.getItem('auth-dir');
+            if (dir) document.documentElement.classList.add(`auth-dir-${dir}`);
+        })();
+    </script>
+    <script>
+        (function() {
+            try {
+                const stored = localStorage.getItem('fintrack_theme');
+                if (stored === 'light') document.documentElement.setAttribute('data-theme', 'light');
+            } catch (e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack — Ro'yxatdan o'tish</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:#0a0f1e; --panel:#0f1629; --card:#131c30; --card2:#172035;
+            --border:#1e2d47; --border2:#243455;
+            --text:#e2e8f4; --sub:#7a8aaa; --dim:#4a5878;
+            --green:#22c55e; --green-bg:rgba(34,197,94,.10);
+            --blue:#3b82f6; --blue-bg:rgba(59,130,246,.10);
+            --red:#ef4444; --red-bg:rgba(239,68,68,.10);
+            --amber:#f59e0b; --amber-bg:rgba(245,158,11,.10);
+            --purple:#8b5cf6; --purple-bg:rgba(139,92,246,.12);
+            --shadow-soft: 0 12px 24px rgba(2, 6, 23, 0.35);
+            --shadow-strong: 0 26px 60px rgba(2, 6, 23, 0.45);
+            --glow-green: rgba(34, 197, 94, 0.07);
+            --glow-purple: rgba(139, 92, 246, 0.06);
+            --lang-pill-bg: linear-gradient(135deg, rgba(255,255,255,.08), rgba(15,23,42,.7));
+            --lang-pill-border: rgba(122, 165, 255, 0.25);
+            --lang-pill-shadow: inset 0 0 20px rgba(59, 130, 246, 0.12), 0 10px 24px rgba(2, 6, 23, 0.35);
+            --lang-dot-bg: rgba(255, 255, 255, 0.06);
+            --lang-dot-border: rgba(255, 255, 255, 0.1);
+            --lang-dot-color: #cbd5f5;
+            --lang-dot-hover-border: rgba(122, 165, 255, 0.6);
+            --lang-dot-hover-color: #e2ebff;
+            --lang-dot-active-bg: #ffffff;
+            --lang-dot-active-color: #0a0e27;
+            --lang-dot-active-border: rgba(255, 255, 255, 0.9);
+            --lang-dot-active-shadow: 0 10px 18px rgba(2, 6, 23, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.35);
+        }
+        html[data-theme="light"] {
+            --bg:#f7f8fb; --panel:#ffffff; --card:#f2f4f8; --card2:#ffffff;
+            --border:#dbe2ee; --border2:#c9d4e6;
+            --text:#0f172a; --sub:#4b5563; --dim:#6b7280;
+            --green:#16a34a; --green-bg:rgba(22,163,74,.12);
+            --blue:#2563eb; --blue-bg:rgba(37,99,235,.12);
+            --red:#dc2626; --red-bg:rgba(220,38,38,.12);
+            --amber:#d97706; --amber-bg:rgba(217,119,6,.12);
+            --purple:#6366f1; --purple-bg:rgba(99,102,241,.12);
+            --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.08);
+            --shadow-strong: 0 26px 54px rgba(15, 23, 42, 0.12);
+            --glow-green: rgba(22, 163, 74, 0.1);
+            --glow-purple: rgba(99, 102, 241, 0.1);
+            --lang-pill-bg: linear-gradient(135deg, rgba(15,23,42,0.04), rgba(148,163,184,0.22));
+            --lang-pill-border: rgba(37, 99, 235, 0.25);
+            --lang-pill-shadow: inset 0 0 14px rgba(37, 99, 235, 0.08), 0 8px 18px rgba(15, 23, 42, 0.08);
+            --lang-dot-bg: rgba(255, 255, 255, 0.92);
+            --lang-dot-border: rgba(15, 23, 42, 0.18);
+            --lang-dot-color: #0f172a;
+            --lang-dot-hover-border: rgba(37, 99, 235, 0.6);
+            --lang-dot-hover-color: #0f172a;
+            --lang-dot-active-bg: #2563eb;
+            --lang-dot-active-color: #ffffff;
+            --lang-dot-active-border: rgba(37, 99, 235, 0.4);
+            --lang-dot-active-shadow: 0 12px 20px rgba(37, 99, 235, 0.25), 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        html{background:var(--bg);}
+        body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden;}
+        body.auth-register{flex-direction:row-reverse;}
+
+        /* LEFT */
+        .left{
+            width:400px;flex-shrink:0;
+            background: var(--panel);border-right:1px solid var(--border);
+            display:flex;flex-direction:column;padding:40px;
+            position:relative;overflow:hidden;z-index:1;
+            transform-origin: center left;
+            will-change: transform, opacity;
+        }
+        .left::before{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,var(--glow-green),transparent 70%);top:-150px;right:-150px;pointer-events:none;}
+        .left::after{content:'';position:absolute;width:400px;height:400px;background:radial-gradient(circle,var(--glow-purple),transparent 70%);bottom:-100px;left:-100px;pointer-events:none;}
+
+        .logo{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--text);text-decoration:none;margin-bottom:48px;position:relative;z-index:1;}
+        .logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--purple));display:grid;place-items:center;}
+        .logo-mark svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2;}
+
+        .left-body{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1;}
+        .left-tag{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:14px;}
+        .left-title{font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1.2;margin-bottom:10px;}
+        .left-sub{font-size:13px;color:var(--sub);line-height:1.6;margin-bottom:28px;}
+
+        /* Benefits */
+        .benefits{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+        .benefit{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;transition:border-color .2s;}
+        .benefit:hover{border-color:var(--border2);}
+        .benefit-icon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;}
+        .benefit-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;}
+        .benefit-icon.blue{background:var(--blue-bg);color:var(--blue);}
+        .benefit-icon.green{background:var(--green-bg);color:var(--green);}
+        .benefit-icon.amber{background:var(--amber-bg);color:var(--amber);}
+        .benefit-icon.purple{background:var(--purple-bg);color:var(--purple);}
+        .benefit-text strong{display:block;font-size:12.5px;font-weight:600;margin-bottom:1px;}
+        .benefit-text span{font-size:11px;color:var(--dim);}
+
+        .trust-row{display:flex;gap:16px;}
+        .trust-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim);}
+        .trust-item svg{width:12px;height:12px;fill:none;stroke:var(--green);stroke-width:2;}
+
+        .left-footer{font-size:11px;color:var(--dim);position:relative;z-index:1;margin-top:28px;}
+
+        /* RIGHT */
+        .right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px;overflow-y:auto;background: var(--bg);position:relative;z-index:1;transform-origin: center right;will-change: transform;}
+        body.auth-animating .right{overflow:hidden;}
+        .form-box{width:100%;max-width:380px;}
+
+        .form-heading{margin-bottom:24px;}
+        .form-heading h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;}
+        .form-heading p{font-size:13.5px;color:var(--sub);}
+
+        /* step indicator */
+        .step-indicator{display:flex;gap:6px;margin-bottom:24px;}
+        .si{flex:1;height:2px;border-radius:2px;background:var(--border);}
+        .si.done{background:var(--green);}
+        .si.active{background:var(--blue);}
+
+        .form-group{margin-bottom:15px;}
+        .form-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+        .form-label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.8px;}
+        .form-label svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;}
+        .form-hint{font-size:10px;color:var(--dim);}
+        .input-wrap{position:relative;}
+        .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none;display:flex;align-items:center;}
+        .input-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;}
+        .input-wrap:focus-within .input-icon{color:var(--blue);}
+        .form-control{
+            width:100%;background:var(--card);border:1px solid var(--border);
+            border-radius:9px;padding:11px 14px 11px 42px;
+            color:var(--text);font-family:'Inter',sans-serif;font-size:14px;
+            transition:border-color .18s,box-shadow .18s,background .18s;
+            -webkit-appearance:none;outline:none;
+        }
+        .form-control::placeholder{color:var(--dim);}
+        .form-control:focus{border-color:var(--blue);background:var(--card2);box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+        .form-control.has-error{border-color:rgba(239,68,68,.4);}
+        .form-control.has-error:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.1);}
+
+        .field-help{font-size:10.5px;color:var(--dim);margin-top:5px;}
+        .field-err{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--red);margin-top:5px;}
+        .field-err svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0;}
+
+        /* pw strength */
+        .pw-strength{margin-top:7px;}
+        .pw-bars{display:flex;gap:4px;margin-bottom:4px;}
+        .pw-bar{flex:1;height:2px;border-radius:2px;background:var(--border);transition:background .25s;}
+        .pw-label{font-size:10px;color:var(--dim);}
+
+        .error-box{background:var(--red-bg);border:1px solid rgba(239,68,68,.2);border-radius:9px;padding:11px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:9px;}
+        .error-box svg{width:15px;height:15px;fill:none;stroke:var(--red);stroke-width:2;flex-shrink:0;margin-top:1px;}
+        .error-box ul{list-style:none;}
+        .error-box li{color:var(--red);font-size:12px;line-height:1.5;}
+
+        .btn-submit{
+            width:100%;padding:12px;background:var(--blue);color:#fff;
+            border:none;border-radius:9px;font-family:'Inter',sans-serif;
+            font-size:14px;font-weight:600;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;gap:8px;
+            transition:all .18s;box-shadow:0 4px 16px rgba(59,130,246,.3);margin-top:4px;
+        }
+        .btn-submit svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2;}
+        .btn-submit:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,.45);}
+
+        .terms-note{text-align:center;font-size:11px;color:var(--dim);margin-top:10px;line-height:1.5;}
+        .terms-note a{color:var(--sub);text-decoration:underline;}
+
+        .divider{display:flex;align-items:center;gap:12px;margin:18px 0;}
+        .div-line{flex:1;height:1px;background:var(--border);}
+        .div-txt{font-size:11px;color:var(--dim);}
+
+        .form-footer{text-align:center;font-size:13px;color:var(--sub);}
+        .form-footer a{color:var(--blue);text-decoration:none;font-weight:600;}
+        .form-footer a:hover{text-decoration:underline;}
+
+        .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--dim);text-decoration:none;font-size:12px;margin-top:16px;transition:color .18s;}
+        .back-link svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;}
+        .back-link:hover{color:var(--sub);}
+
+        /* ── TABLET ── */
+        @media(max-width:820px){
+            body{flex-direction:column!important;}
+            .left{width:100%;padding:28px 24px;}
+            .left-body{padding:20px 0;}
+            .right{padding:28px 24px;align-items:flex-start;}
+        }
+
+        /* ── MOBILE ── */
+        @media(max-width:600px){
+            body{flex-direction:column!important;}
+            .left{padding:20px 16px;}
+            .logo{margin-bottom:20px!important;}
+            .left-body{padding:14px 0;}
+            .left-title{font-size:18px;}
+            .left-sub{font-size:12.5px;margin-bottom:16px;}
+            .benefits{gap:8px;margin-bottom:18px;}
+            .benefit{padding:10px 12px;}
+            .benefit-icon{width:30px;height:30px;}
+            .benefit-text strong{font-size:12px;}
+            .benefit-text span{font-size:10px;}
+            .trust-row{gap:10px;flex-wrap:wrap;}
+            .left-footer{margin-top:14px;}
+
+            .right{padding:20px 16px 32px;align-items:flex-start;}
+            .form-box{max-width:100%;}
+            .form-heading h1{font-size:18px;}
+            .form-heading{margin-bottom:18px;}
+            .form-control{font-size:16px;}
+            .btn-submit{padding:13px;font-size:15px;}
+            .step-indicator{margin-bottom:18px;}
+
+            .auth-actions{gap:6px;}
+            .lang-flag-dot{width:30px;height:30px;font-size:10px;}
+            .lang-flags{gap:4px;padding:4px;}
+            .theme-toggle{width:32px;height:32px;}
+        }
+
+        @media(max-width:380px){
+            .left{padding:14px 12px;}
+            .right{padding:14px 12px 28px;}
+            .benefits{display:none;} /* hide on very small — save space */
+        }
+    
+        .lang-switch{display:inline-flex;align-items:center;}
+        .lang-flags{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--lang-pill-bg);border:1px solid var(--lang-pill-border);box-shadow:var(--lang-pill-shadow);}
+        .lang-flag-dot{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--lang-dot-bg);border:1px solid var(--lang-dot-border);color:var(--lang-dot-color);cursor:pointer;transition:all .18s;font-weight:800;letter-spacing:.6px;text-transform:uppercase;}
+        .lang-flag-dot:hover{border-color:var(--lang-dot-hover-border);color:var(--lang-dot-hover-color);}
+        .lang-flag-dot.active{background:var(--lang-dot-active-bg);color:var(--lang-dot-active-color);border-color:var(--lang-dot-active-border);box-shadow:var(--lang-dot-active-shadow);}
+        .auth-actions{display:flex;align-items:center;gap:10px;}
+        .theme-toggle{width:36px;height:36px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s ease;}
+        .theme-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;}
+        .theme-toggle:hover{border-color:var(--border2);box-shadow:0 8px 18px rgba(59,130,246,.18);}
+        .lang-flag-emoji{font-size:12px;line-height:1;}
+
+        .auth-bg-canvas{
+            position:fixed;
+            inset:0;
+            width:100%;
+            height:100%;
+            z-index:0;
+            pointer-events:none;
+        }
+        @keyframes slideOutLeft{ from{transform: translateX(0);} to{transform: translateX(-120%);} }
+        @keyframes slideInRight{ from{transform: translateX(120%);} to{transform: translateX(0);} }
+        @keyframes slideOutRight{ from{transform: translateX(0);} to{transform: translateX(120%);} }
+        @keyframes slideInLeft{ from{transform: translateX(-120%);} to{transform: translateX(0);} }
+
+        html.auth-dir-left::view-transition-old(root){
+            animation: slideOutLeft 0.7s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        html.auth-dir-left::view-transition-new(root){
+            animation: slideInRight 0.7s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        html.auth-dir-right::view-transition-old(root){
+            animation: slideOutRight 0.7s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        html.auth-dir-right::view-transition-new(root){
+            animation: slideInLeft 0.7s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        ::view-transition-old(root),
+        ::view-transition-new(root){
+            animation-duration: 0.7s;
+            animation-timing-function: cubic-bezier(0.22,1,0.36,1);
+            background: var(--bg);
+            mix-blend-mode: normal;
+        }
+        ::view-transition-image-pair(root){
+            background: var(--bg);
+        }
+
+    </style>
+</head>
+<body class="auth-register">
+<canvas id="authBg" class="auth-bg-canvas" aria-hidden="true"></canvas>
+
+<!-- LEFT -->
+<div class="left">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:48px;position:relative;z-index:1;">
+        <a href="{% url 'landing' %}" class="logo" style="margin-bottom:0;">
+            <div class="logo-mark"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            FinTrack
+        </a>
+        <div class="auth-actions">
+            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Tungi rejim" title="Tungi rejim">
+                <svg viewBox="0 0 24 24"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5Z"/></svg>
+            </button>
+            {% include 'partials/language_switcher.html' %}
+        </div>
+    </div>
+
+    <div class="left-body">
+        <div class="left-tag" data-i18n="left-tag">Yangi hisob</div>
+        <h2 class="left-title" data-i18n="left-title">Moliyaviy sayohatingiz<br>shu yerdan boshlanadi</h2>
+        <p class="left-sub" data-i18n="left-sub">Bepul hisob oching va moliyaviy intizomni bugundan boshlang.</p>
+
+        <div class="benefits">
+            <div class="benefit">
+                <div class="benefit-icon blue"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+                <div class="benefit-text"><strong data-i18n="b1-title">Real vaqt analitika</strong><span data-i18n="b1-sub">Har bir so'm nazorat ostida</span></div>
+            </div>
+            <div class="benefit">
+                <div class="benefit-icon green"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                <div class="benefit-text"><strong data-i18n="b2-title">Byudjet rejalash</strong><span data-i18n="b2-sub">Kategoriyalar bo'yicha limitlar</span></div>
+            </div>
+            <div class="benefit">
+                <div class="benefit-icon amber"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                <div class="benefit-text"><strong data-i18n="b3-title">AI tavsiyalar</strong><span data-i18n="b3-sub">Aqlli tejash maslahatlari</span></div>
+            </div>
+            <div class="benefit">
+                <div class="benefit-icon purple"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div class="benefit-text"><strong data-i18n="b4-title">Qarz boshqaruvi</strong><span data-i18n="b4-sub">Muddatlar va eslatmalar</span></div>
+            </div>
+        </div>
+
+        <div class="trust-row">
+            <div class="trust-item"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <span data-i18n="trust-secure">Xavfsiz</span></div>
+            <div class="trust-item"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> <span data-i18n="trust-encrypted">Shifrlangan</span></div>
+            <div class="trust-item"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span data-i18n="trust-free">Bepul</span></div>
+        </div>
+    </div>
+
+    <div class="left-footer" data-i18n="footer-copy">© 2026 FinTrack — Shaxsiy moliya boshqaruvi</div>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+    <div class="form-box">
+        <div class="form-heading">
+            <h1 data-i18n="form-title">Hisob yaratish</h1>
+            <p data-i18n="form-sub">Ma'lumotlaringizni kiriting va boshlang</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="si done"></div>
+            <div class="si active"></div>
+            <div class="si"></div>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="error-box">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <ul>{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <div class="form-label-row">
+                    <label class="form-label">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span data-i18n="username">Foydalanuvchi nomi</span>
+                    </label>
+                </div>
+                <div class="input-wrap">
+                    <div class="input-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                    <input type="text" name="username"
+                           class="form-control {% if form.username.errors %}has-error{% endif %}"
+                           placeholder="username" required autofocus autocomplete="username"
+                           value="{{ form.username.value|default:'' }}">
+                </div>
+                {% if form.username.errors %}
+                    {% for e in form.username.errors %}
+                    <div class="field-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> {{ e }}</div>
+                    {% endfor %}
+                {% else %}
+                    <div class="field-help" data-i18n="username-help">Harflar, raqamlar va @/./+/-/_ dan foydalaning</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <div class="form-label-row">
+                    <label class="form-label">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span data-i18n="password">Parol</span>
+                    </label>
+                    <span class="form-hint" data-i18n="min-chars">Kamida 8 belgi</span>
+                </div>
+                <div class="input-wrap">
+                    <div class="input-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+                    <input type="password" name="password1" id="pw1"
+                           class="form-control {% if form.password1.errors %}has-error{% endif %}"
+                           placeholder="••••••••" required autocomplete="new-password">
+                </div>
+                {% if form.password1.errors %}
+                    {% for e in form.password1.errors %}
+                    <div class="field-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> {{ e }}</div>
+                    {% endfor %}
+                {% else %}
+                    <div class="pw-strength">
+                        <div class="pw-bars">
+                            <div class="pw-bar" id="b1"></div>
+                            <div class="pw-bar" id="b2"></div>
+                            <div class="pw-bar" id="b3"></div>
+                            <div class="pw-bar" id="b4"></div>
+                        </div>
+                        <div class="pw-label" id="pw-label">Parol kuchi</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span data-i18n="confirm-password">Parolni tasdiqlang</span>
+                </label>
+                <div class="input-wrap">
+                    <div class="input-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <input type="password" name="password2"
+                           class="form-control {% if form.password2.errors %}has-error{% endif %}"
+                           placeholder="••••••••" required autocomplete="new-password">
+                </div>
+                {% if form.password2.errors %}
+                    {% for e in form.password2.errors %}
+                    <div class="field-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> {{ e }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <div class="form-label-row">
+                    <label class="form-label">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5 22v-2a5 5 0 0 1 10 0v2"/><path d="M19 22v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span data-i18n="gender">Jins</span> *
+                    </label>
+                </div>
+                <div class="input-wrap">
+                    <div class="input-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5 22v-2a5 5 0 0 1 10 0v2"/><path d="M19 22v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                    <select name="gender" class="form-control" required>
+                        <option value="" {% if not gender_value %}selected{% endif %}>Tanlang</option>
+                        <option value="male" {% if gender_value == 'male' %}selected{% endif %}>Erkak</option>
+                        <option value="female" {% if gender_value == 'female' %}selected{% endif %}>Ayol</option>
+                    </select>
+                </div>
+                <div class="field-help" data-i18n="gender-help">Oila rollari jinsga qarab belgilanadi</div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                <span data-i18n="form-title">Hisob yaratish</span>
+            </button>
+            <p class="terms-note" data-i18n="terms-note">Ro'yxatdan o'tish orqali <a href="#">foydalanish shartlari</a>ga rozilik bildirasiz</p>
+        </form>
+
+        <div class="divider"><div class="div-line"></div><span class="div-txt" data-i18n="already-have">allaqachon hisobingiz bormi?</span><div class="div-line"></div></div>
+
+        <div class="form-footer"><a href="{% url 'login' %}" data-i18n="login-link" data-auth-slide="right">← Kirishga o'tish</a></div>
+
+        <a class="back-link" href="{% url 'landing' %}">
+            <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span data-i18n="back-home">Bosh sahifaga qaytish</span>
+        </a>
+    </div>
+</div>
+
+<script>
+const LANG = '{{ request.LANGUAGE_CODE|default:"uz" }}';
+const T = {
+  uz: {
+    'left-tag': 'Yangi hisob',
+    'left-title': "Moliyaviy sayohatingiz shu yerdan boshlanadi",
+    'left-sub': 'Bepul hisob oching va moliyaviy intizomni bugundan boshlang.',
+    'b1-title': 'Real vaqt analitika', 'b1-sub': "Har bir so'm nazorat ostida",
+    'b2-title': 'Byudjet rejalash', "b2-sub": "Kategoriyalar bo'yicha limitlar",
+    'b3-title': 'AI tavsiyalar', 'b3-sub': 'Aqlli tejash maslahatlari',
+    'b4-title': 'Qarz boshqaruvi', 'b4-sub': 'Muddatlar va eslatmalar',
+    'trust-secure': 'Xavfsiz', 'trust-encrypted': 'Shifrlangan', 'trust-free': 'Bepul',
+    'footer-copy': '© 2026 FinTrack — Shaxsiy moliya boshqaruvi',
+    'form-title': 'Hisob yaratish',
+    'form-sub': "Ma'lumotlaringizni kiriting va boshlang",
+    'username': 'Foydalanuvchi nomi', 'password': 'Parol',
+    'min-chars': 'Kamida 8 belgi',
+    'confirm-password': 'Parolni tasdiqlang',
+    'gender': 'Jins',
+    'terms-note': "Ro'yxatdan o'tish orqali foydalanish shartlariga rozilik bildirasiz",
+    'already-have': 'allaqachon hisobingiz bormi?',
+    'login-link': "← Kirishga o'tish",
+    'back-home': 'Bosh sahifaga qaytish',
+    'username-help': "Harflar, raqamlar va @/./+/-/_ dan foydalaning",
+    'gender-help': "Oila rollari jinsga qarab belgilanadi",
+  },
+  ru: {
+    'left-tag': 'Новый аккаунт',
+    'left-title': 'Ваше финансовое путешествие начинается здесь',
+    'left-sub': 'Создайте бесплатный аккаунт и начните финансовую дисциплину сегодня.',
+    'b1-title': 'Аналитика в реальном времени', 'b1-sub': 'Каждый сум под контролем',
+    'b2-title': 'Планирование бюджета', 'b2-sub': 'Лимиты по категориям',
+    'b3-title': 'AI советы', 'b3-sub': 'Умные советы по экономии',
+    'b4-title': 'Управление долгами', 'b4-sub': 'Сроки и напоминания',
+    'trust-secure': 'Безопасно', 'trust-encrypted': 'Зашифровано', 'trust-free': 'Бесплатно',
+    'footer-copy': '© 2026 FinTrack — Управление личными финансами',
+    'form-title': 'Создать аккаунт',
+    'form-sub': 'Введите данные и начните',
+    'username': 'Имя пользователя', 'password': 'Пароль',
+    'min-chars': 'Минимум 8 символов',
+    'confirm-password': 'Подтвердите пароль',
+    'gender': 'Пол',
+    'terms-note': 'Регистрируясь, вы соглашаетесь с условиями использования',
+    'already-have': 'Уже есть аккаунт?',
+    'login-link': '← Перейти к входу',
+    'back-home': 'На главную страницу',
+    'username-help': 'Буквы, цифры и символы @/./+/-/_',
+    'gender-help': 'Семейные роли определяются по полу',
+  },
+  en: {
+    'left-tag': 'New Account',
+    'left-title': 'Your financial journey starts here',
+    'left-sub': 'Create a free account and start financial discipline today.',
+    'b1-title': 'Real-time Analytics', 'b1-sub': 'Every sum under control',
+    'b2-title': 'Budget Planning', 'b2-sub': 'Limits by categories',
+    'b3-title': 'AI Recommendations', 'b3-sub': 'Smart saving tips',
+    'b4-title': 'Debt Management', 'b4-sub': 'Deadlines and reminders',
+    'trust-secure': 'Secure', 'trust-encrypted': 'Encrypted', 'trust-free': 'Free',
+    'footer-copy': '© 2026 FinTrack — Personal Finance Management',
+    'form-title': 'Create Account',
+    'form-sub': 'Enter your details and get started',
+    'username': 'Username', 'password': 'Password',
+    'min-chars': 'At least 8 characters',
+    'confirm-password': 'Confirm Password',
+    'gender': 'Gender',
+    'terms-note': 'By registering you agree to our terms of service',
+    'already-have': 'Already have an account?',
+    'login-link': '← Go to Login',
+    'back-home': 'Back to home',
+    'username-help': 'Letters, numbers and @/./+/-/_ only',
+    'gender-help': 'Family roles are assigned based on gender',
+  }
+};
+
+// Gender select options
+const GENDER_T = {
+  uz: { '': 'Tanlang', male: 'Erkak', female: 'Ayol' },
+  ru: { '': 'Выберите', male: 'Мужской', female: 'Женский' },
+  en: { '': 'Select', male: 'Male', female: 'Female' },
+};
+
+// PW strength labels
+const PW_LABELS = {
+  uz: ['Juda zaif', "O'rtacha", 'Yaxshi', 'Kuchli'],
+  ru: ['Очень слабый', 'Средний', 'Хороший', 'Сильный'],
+  en: ['Very weak', 'Medium', 'Good', 'Strong'],
+};
+
+function applyTranslations(lang) {
+  const dict = T[lang] || T['uz'];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) {
+      if (key === 'terms-note') {
+        el.innerHTML = dict[key].replace('foydalanish shartlari', '<a href="#">foydalanish shartlari</a>')
+                                .replace('terms of service', '<a href="#">terms of service</a>')
+                                .replace('условиями использования', '<a href="#">условиями использования</a>');
+      } else {
+        el.textContent = dict[key];
+      }
+    }
+  });
+  // Update gender options
+  const genderSel = document.querySelector('select[name="gender"]');
+  if (genderSel) {
+    const gDict = GENDER_T[lang] || GENDER_T['uz'];
+    Array.from(genderSel.options).forEach(opt => {
+      if (gDict[opt.value] !== undefined) opt.textContent = gDict[opt.value];
+    });
+  }
+  document.documentElement.lang = lang;
+}
+
+function initLangSwitch(root = document) {
+  root.querySelectorAll('.lang-switch').forEach((form) => {
+    if (form.dataset.langBound) return;
+    form.dataset.langBound = '1';
+
+    const input = form.querySelector('input[name="language"]');
+    const labelEl = form.querySelector('[data-lang-label]');
+    const flagEl = form.querySelector('[data-lang-flag]');
+    const cycleBtn = form.querySelector('[data-lang-cycle]');
+    const dots = Array.from(form.querySelectorAll('.lang-flag-dot'));
+    const order = (form.dataset.langOrder || 'uz,ru,en')
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const map = {};
+    dots.forEach(dot => {
+      const key = (dot.dataset.lang || '').toLowerCase();
+      if (!key) return;
+      map[key] = {
+        label: dot.dataset.label || key.toUpperCase(),
+        flag: dot.dataset.flag || dot.textContent.trim(),
+      };
+    });
+
+    const submitForm = () => {
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+    };
+
+    const applyLang = (lang, submit) => {
+      const resolved = map[lang] ? lang : (order[0] || 'uz');
+      if (input) {
+        input.value = resolved;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (labelEl && map[resolved]) labelEl.textContent = map[resolved].label;
+      if (flagEl && map[resolved]) flagEl.textContent = map[resolved].flag;
+      dots.forEach(dot => dot.classList.toggle('active', dot.dataset.lang === resolved));
+      if (submit) submitForm();
+    };
+
+    const current = (input && input.value) || order[0] || 'uz';
+    applyLang(current, false);
+
+    if (cycleBtn) {
+      cycleBtn.addEventListener('click', () => {
+        const cur = (input && input.value) || current;
+        let idx = order.indexOf(cur);
+        if (idx < 0) idx = 0;
+        const next = order[(idx + 1) % order.length];
+        applyLang(next, true);
+      });
+    }
+
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const lang = (dot.dataset.lang || '').toLowerCase();
+        if (!lang) return;
+        applyLang(lang, true);
+      });
+    });
+  });
+}
+
+initLangSwitch();
+applyTranslations(LANG);
+
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.name === 'language') {
+    applyTranslations(e.target.value);
+  }
+});
+</script>
+<script>
+(function initTheme() {
+  const THEME_KEY = 'fintrack_theme';
+  const toggle = document.getElementById('themeToggle');
+  if (!toggle) return;
+
+  const sunIcon = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+  const moonIcon = '<svg viewBox="0 0 24 24"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5Z"/></svg>';
+
+  function applyTheme(theme) {
+    const resolved = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', resolved);
+    toggle.innerHTML = resolved === 'light' ? moonIcon : sunIcon;
+    toggle.setAttribute('aria-label', resolved === 'light' ? 'Tungi rejim' : 'Kunduzgi rejim');
+    toggle.setAttribute('title', resolved === 'light' ? 'Tungi rejim' : 'Kunduzgi rejim');
+  }
+
+  const stored = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(stored || (prefersDark ? 'dark' : 'light'));
+
+  toggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  });
+})();
+</script>
+
+<script>
+    const pw1 = document.getElementById('pw1');
+    const bars = ['b1','b2','b3','b4'].map(id => document.getElementById(id));
+    const pwLabel = document.getElementById('pw-label');
+    const colors = ['#ef4444','#f59e0b','#3b82f6','#22c55e'];
+    if (pw1 && bars[0]) {
+        pw1.addEventListener('input', () => {
+            const v = pw1.value;
+            let s = 0;
+            if (v.length >= 8) s++;
+            if (/[A-Z]/.test(v)) s++;
+            if (/[0-9]/.test(v)) s++;
+            if (/[^A-Za-z0-9]/.test(v)) s++;
+            bars.forEach((b, i) => { b.style.background = i < s ? colors[s-1] : 'var(--border)'; });
+            const langInput = document.querySelector('.lang-switch input[name="language"]');
+            const lang = (langInput && langInput.value) || LANG || 'uz';
+            const labels = PW_LABELS[lang] || PW_LABELS.uz;
+            if (pwLabel) pwLabel.textContent = v.length ? labels[Math.max(0,s-1)] : (T[lang] || T.uz)['password'] || 'Parol kuchi';
+            if (pwLabel) pwLabel.style.color = v.length ? colors[s-1] : 'var(--dim)';
+        });
+    }
+</script>
+<script>
+(function() {
+  const prefersReduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const links = document.querySelectorAll('[data-auth-slide]');
+  if (!links.length) return;
+
+  const stored = sessionStorage.getItem('auth-dir');
+  if (stored) {
+    document.documentElement.classList.add(`auth-dir-${stored}`);
+    setTimeout(() => {
+      document.documentElement.classList.remove(`auth-dir-${stored}`);
+      sessionStorage.removeItem('auth-dir');
+    }, 700);
+  }
+
+  links.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const dir = link.dataset.authSlide || 'right';
+      sessionStorage.setItem('auth-dir', dir);
+      document.documentElement.classList.remove('auth-dir-left', 'auth-dir-right');
+      document.documentElement.classList.add(`auth-dir-${dir}`);
+      if (document.startViewTransition && !prefersReduce) {
+        e.preventDefault();
+        document.startViewTransition(() => {
+          window.location.href = link.href;
+        });
+      }
+    });
+  });
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/paper@0.12.17/dist/paper-full.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('authBg');
+  if (!canvas || !window.paper) return;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    if (paper.view) {
+      paper.view.viewSize = new paper.Size(window.innerWidth, window.innerHeight);
+    }
+  }
+
+  resizeCanvas();
+  paper.setup(canvas);
+
+  const shapeGroup = new paper.Group();
+  let positionArray = [];
+
+  function getCanvasBounds() {
+    const canvasWidth = paper.view.size.width;
+    const canvasHeight = paper.view.size.height;
+    const canvasMiddleX = canvasWidth / 2;
+    const canvasMiddleY = canvasHeight / 2;
+
+    const position1 = { x: (canvasMiddleX / 2) + 100, y: 100 };
+    const position2 = { x: 200, y: canvasMiddleY };
+    const position3 = { x: (canvasMiddleX - 50) + (canvasMiddleX / 2), y: 150 };
+    const position4 = { x: 0, y: canvasMiddleY + 100 };
+    const position5 = { x: canvasWidth - 130, y: canvasHeight - 75 };
+    const position6 = { x: canvasMiddleX + 80, y: canvasHeight - 50 };
+    const position7 = { x: canvasWidth + 60, y: canvasMiddleY - 50 };
+    const position8 = { x: canvasMiddleX + 100, y: canvasMiddleY + 100 };
+
+    positionArray = [position3, position2, position5, position4, position1, position6, position7, position8];
+  }
+
+  function initializeShapes() {
+    shapeGroup.removeChildren();
+    getCanvasBounds();
+
+    const shapePathData = [
+      'M231,352l445-156L600,0L452,54L331,3L0,48L231,352',
+      'M0,0l64,219L29,343l535,30L478,37l-133,4L0,0z',
+      'M0,65l16,138l96,107l270-2L470,0L337,4L0,65z',
+      'M333,0L0,94l64,219L29,437l570-151l-196-42L333,0',
+      'M331.9,3.6l-331,45l231,304l445-156l-76-196l-148,54L331.9,3.6z',
+      'M389,352l92-113l195-43l0,0l0,0L445,48l-80,1L122.7,0L0,275.2L162,297L389,352',
+      'M 50 100 L 300 150 L 550 50 L 750 300 L 500 250 L 300 450 L 50 100',
+      'M 700 350 L 500 350 L 700 500 L 400 400 L 200 450 L 250 350 L 100 300 L 150 50 L 350 100 L 250 150 L 450 150 L 400 50 L 550 150 L 350 250 L 650 150 L 650 50 L 700 150 L 600 250 L 750 250 L 650 300 L 700 350 '
+    ];
+
+    for (let i = 0; i < shapePathData.length; i++) {
+      const headerShape = new paper.Path({
+        strokeColor: new paper.Color(1, 1, 1, 0.14),
+        strokeWidth: 1.4,
+        parent: shapeGroup,
+      });
+      headerShape.pathData = shapePathData[i];
+      headerShape.scale(1.7);
+      headerShape.position = positionArray[i];
+    }
+  }
+
+  initializeShapes();
+
+  paper.view.onFrame = function(event) {
+    if (event.count % 4 !== 0) return;
+    for (let i = 0; i < shapeGroup.children.length; i++) {
+      shapeGroup.children[i].rotate(i % 2 === 0 ? -0.12 : 0.12);
+    }
+  };
+
+  paper.view.onResize = function() {
+    resizeCanvas();
+    getCanvasBounds();
+    for (let i = 0; i < shapeGroup.children.length; i++) {
+      shapeGroup.children[i].position = positionArray[i];
+    }
+    if (paper.view.size.width < 700) {
+      if (shapeGroup.children[3]) shapeGroup.children[3].opacity = 0;
+      if (shapeGroup.children[2]) shapeGroup.children[2].opacity = 0;
+      if (shapeGroup.children[5]) shapeGroup.children[5].opacity = 0;
+    } else {
+      if (shapeGroup.children[3]) shapeGroup.children[3].opacity = 1;
+      if (shapeGroup.children[2]) shapeGroup.children[2].opacity = 1;
+      if (shapeGroup.children[5]) shapeGroup.children[5].opacity = 1;
+    }
+  };
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'transaction_list' %}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:640px; margin:0 auto;">
+<div class="card">
+    <!-- Type switcher -->
+    <div class="tabs" style="margin-bottom:24px;">
+        <button type="button" class="tab-btn {% if default_type == 'expense' %}active{% endif %}" onclick="setType('expense')"><i class="ti ti-arrow-down-right"></i>{% t "Xarajat" %}</button>
+        <button type="button" class="tab-btn {% if default_type == 'income' %}active{% endif %}" onclick="setType('income')"><i class="ti ti-arrow-up-right"></i>{% t "Daromad" %}</button>
+        <button type="button" class="tab-btn {% if default_type == 'transfer' %}active{% endif %}" onclick="setType('transfer')"><i class="ti ti-arrows-left-right"></i> {% t "Transfer" %}</button>
+    </div>
+
+    <form method="post" id="txForm">
+        {% csrf_token %}
+        <input type="hidden" name="transaction_type" id="txType" value="{{ default_type }}">
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{% t "Summa *" %}</label>
+                <input type="number" name="amount" class="form-control" placeholder="0.00" min="0" step="any" required
+                       value="{{ transaction.amount|default:'' }}" style="font-size:20px; font-weight:700;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Sana *" %}</label>
+                <input type="date" name="date" class="form-control" required
+                       value="{{ transaction.date|default:today }}">
+            </div>
+        </div>
+
+        <!-- From account -->
+        <div class="form-group">
+            <label class="form-label" id="accountLabel">{% t "Hisob *" %}</label>
+            <select name="account" class="form-control" id="accountSelect" required>
+                <option value="">{% t "Tanlang" %}</option>
+                {% for acc in accounts %}
+                    <option value="{{ acc.pk }}" 
+                            data-currency="{{ acc.currency }}"
+                            {% if transaction and transaction.account_id == acc.pk %}selected{% endif %}>
+                        {% tacc acc.name %} ({{ acc.balance|floatformat:0 }} {{ acc.currency }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- To account (only for transfer) -->
+        <div class="form-group" id="toAccountGroup" style="{% if default_type != 'transfer' %}display:none;{% endif %}">
+            <label class="form-label">{% t "Qabul qiluvchi hisob *" %}</label>
+            <select name="to_account" class="form-control" id="toAccountSelect">
+                <option value="">{% t "Tanlang" %}</option>
+                {% for acc in accounts %}
+                    <option value="{{ acc.pk }}" 
+                            data-currency="{{ acc.currency }}"
+                            {% if transaction and transaction.to_account_id == acc.pk %}selected{% endif %}>
+                        {% tacc acc.name %} ({{ acc.currency }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Exchange rate (only when currencies differ) -->
+        <div class="form-group" id="exchangeGroup" style="display:none;">
+            <div style="background:rgba(94,234,212,.1); border:1px solid rgba(94,234,212,.2); border-radius:10px; padding:14px;">
+                <div style="font-size:13px; color:var(--accent2); margin-bottom:10px;"><i class="ti ti-exchange"></i>{% t "Valyuta konvertatsiyasi" %}</div>
+                <div class="grid-2">
+                    <div>
+                        <label class="form-label">{% t "Valyuta kursi" %}</label>
+                        <input type="number" name="exchange_rate" id="exchangeRate" class="form-control" step="any" placeholder="1.0"
+                               value="{{ transaction.exchange_rate|default:1 }}">
+                    </div>
+                    <div>
+                        <label class="form-label">{% t "Konvertatsiya qilingan summa" %}</label>
+                        <input type="number" name="converted_amount" id="convertedAmount" class="form-control" step="any" placeholder="0.00"
+                               value="{{ transaction.converted_amount|default:'' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category (not for transfer) -->
+        <div class="form-group" id="categoryGroup" style="{% if default_type == 'transfer' %}display:none;{% endif %}">
+            <label class="form-label">
+                {% t "Kategoriya" %}
+                <span id="aiSuggest" style="font-size:11px; color:var(--accent); cursor:pointer; margin-left:8px; display:none;" onclick="suggestCategory()"><i class="ti ti-sparkles"></i>{% t "AI taklif" %}</span>
+            </label>
+            <select name="category" class="form-control" id="categorySelect">
+                <option value="">— {% t "Boshqa" %} —</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.pk }}" 
+                            {% if transaction and transaction.category_id == cat.pk %}selected{% endif %}>
+                        {% tcat cat.name %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                {% t "Tavsif" %}
+                <span style="font-size:11px; color:var(--text-muted);">{% t "(yozing, AI kategoriya taklif qiladi)" %}</span>
+            </label>
+            <input type="text" name="description" class="form-control" id="descInput"
+                   placeholder="{% t "Masalan: Korzinka supermarket..." %}"
+                   value="{{ transaction.description|default:'' }}"
+                   oninput="debounceSuggest()">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Qo'shimcha izoh" %}</label>
+            <textarea name="notes" class="form-control" placeholder="{% t "Ixtiyoriy..." %}">{{ transaction.notes|default:'' }}</textarea>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:8px;">
+            <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center; padding:14px;">
+                {% if transaction %}<i class="ti ti-check"></i> {% t "Saqlash" %}{% else %}<i class="ti ti-plus"></i> {% t "Qo'shish" %}{% endif %}
+            </button>
+            <a href="{% url 'transaction_list' %}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setType(type) {
+    document.getElementById('txType').value = type;
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', ['expense','income','transfer'][i] === type);
+    });
+    document.getElementById('toAccountGroup').style.display = type === 'transfer' ? '' : 'none';
+    document.getElementById('categoryGroup').style.display = type === 'transfer' ? 'none' : '';
+    checkExchange();
+}
+
+// Exchange rate visibility
+document.getElementById('accountSelect').addEventListener('change', checkExchange);
+const toSel = document.getElementById('toAccountSelect');
+if (toSel) toSel.addEventListener('change', checkExchange);
+
+function checkExchange() {
+    const type = document.getElementById('txType').value;
+    if (type !== 'transfer') { document.getElementById('exchangeGroup').style.display = 'none'; return; }
+    const fromOpt = document.getElementById('accountSelect').selectedOptions[0];
+    const toOpt = toSel.selectedOptions[0];
+    const fromCur = fromOpt ? fromOpt.dataset.currency : '';
+    const toCur = toOpt ? toOpt.dataset.currency : '';
+    document.getElementById('exchangeGroup').style.display = (fromCur && toCur && fromCur !== toCur) ? '' : 'none';
+}
+
+// AI category suggestion
+let suggestTimer;
+function debounceSuggest() {
+    clearTimeout(suggestTimer);
+    const desc = document.getElementById('descInput').value;
+    if (desc.length > 2) {
+        document.getElementById('aiSuggest').style.display = 'inline';
+        suggestTimer = setTimeout(suggestCategory, 1200);
+    }
+}
+
+function suggestCategory() {
+    const desc = document.getElementById('descInput').value;
+    const type = document.getElementById('txType').value;
+    if (!desc) return;
+    fetch(`/transactions/api/suggest-category/?desc=${encodeURIComponent(desc)}&type=${encodeURIComponent(type)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.suggested) {
+                const sel = document.getElementById('categorySelect');
+                for (let opt of sel.options) {
+                    if (opt.value == data.suggested.id) {
+                        sel.value = opt.value;
+                        const notice = document.createElement('div');
+                        notice.style.cssText = 'font-size:11px; color:var(--accent); margin-top:4px;';
+                        notice.innerHTML = `<span class="icon icon-sm"><i class="ti ti-${data.suggested.icon}"></i></span> {% t "AI taklif" %}: ${data.suggested.name}`;
+                        sel.parentNode.appendChild(notice);
+                        setTimeout(() => notice.remove(), 3000);
+                        break;
+                    }
+                }
+            }
+        });
+}
+</script>
+{% endblock %}

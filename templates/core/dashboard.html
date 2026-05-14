@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+
+{% block title %}{% t "Dashboard" %}{% endblock %}
+{% block page_title %}
+<span class="title-icon"><i class="ti ti-layout-dashboard"></i></span>
+{% if finance_scope == 'family' %}{% t "Oila paneli" %}{% else %}{% t "Dashboard" %}{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'transaction_create' %}?type=expense" class="btn btn-primary"><i class="ti ti-plus"></i> {% t "Yangi tranzaksiya" %}</a>
+{% endblock %}
+
+{% block content %}
+{% t "Boshqa" as other_label %}
+{% if alerts %}
+    {% for alert in alerts %}
+        <div class="alert alert-{{ alert.type }}">{{ alert.msg }}</div>
+    {% endfor %}
+{% endif %}
+
+{% include 'partials/ai_tips.html' %}
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card purple">
+        <div class="stat-label">{% t "Umumiy balans" %}</div>
+        <div class="stat-value" id="totalBalance">{{ total_balance|floatformat:0 }}</div>
+        <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">UZS</div>
+        <div class="stat-icon"><i class="ti ti-wallet"></i></div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-label">{% t "Bu oy daromad" %}</div>
+        <div class="stat-value amount-green">+{{ monthly_income|floatformat:0 }}</div>
+        <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">UZS</div>
+        <div class="stat-icon"><i class="ti ti-arrow-up-right"></i></div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">{% t "Bu oy xarajat" %}</div>
+        <div class="stat-value amount-red">-{{ monthly_expense|floatformat:0 }}</div>
+        <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">UZS</div>
+        <div class="stat-icon"><i class="ti ti-arrow-down-right"></i></div>
+    </div>
+    <div class="stat-card teal">
+        <div class="stat-label">{% t "Sof qoldiq" %}</div>
+        <div class="stat-value {% if net_worth >= 0 %}amount-green{% else %}amount-red{% endif %}">
+            {% if net_worth >= 0 %}+{% endif %}{{ net_worth|floatformat:0 }}
+        </div>
+        <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">UZS | {{ current_month }}</div>
+        <div class="stat-icon"><i class="ti ti-chart-line"></i></div>
+    </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+        <div class="card-title"><span class="title-icon"><i class="ti ti-scale"></i></span> {% t "Daromad vs Xarajat" %}</div>
+        <div class="chart-wrap">
+            <canvas id="incomeExpenseChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title"><span class="title-icon"><i class="ti ti-credit-card"></i></span> {% t "Hisoblar bo'yicha balans" %}</div>
+        {% if accounts %}
+            <div class="chart-wrap">
+                <canvas id="accountBreakdownChart"></canvas>
+            </div>
+        {% else %}
+            <div class="empty-state" style="padding:20px;">
+                <div><i class="ti ti-info-circle"></i> {% t "Hisoblar yo'q" %}</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+        <div class="card-title"><span class="title-icon"><i class="ti ti-chart-line"></i></span> {% t "Oylik xarajat trendi" %}</div>
+        <div class="chart-wrap">
+            <canvas id="monthlyTrendChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title"><span class="title-icon"><i class="ti ti-tag"></i></span> {% t "Kategoriya bo'yicha xarajatlar" %}</div>
+        {% if cat_expenses %}
+            <div class="chart-wrap" style="margin-bottom:12px;">
+                <canvas id="expenseByCategoryChart"></canvas>
+            </div>
+            {% for cat in cat_expenses %}
+            <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span style="font-size:13px;">{{ cat.category__icon|default:'tag'|icon:"sm" }} {% with cname=cat.category__name|default:other_label %}{% tcat cname %}{% endwith %}</span>
+                    <span style="font-size:13px; font-weight:600; color:var(--red);">{{ cat.total|floatformat:0 }} {% t "so'm" %}</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state" style="padding:20px;">
+                <div><i class="ti ti-info-circle"></i> {% t "Bu oy ma'lumot yo'q" %}</div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:20px;">
+    <!-- Hisob raqamlar -->
+    <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <div class="card-title" style="margin:0;"><span class="title-icon"><i class="ti ti-credit-card"></i></span> {% t "Hisob raqamlar" %}</div>
+            <a href="{% url 'account_create' %}" class="btn btn-secondary btn-sm"><i class="ti ti-plus"></i> {% t "Qo'shish" %}</a>
+        </div>
+        {% if accounts %}
+            {% for acc in accounts %}
+            <a href="{% url 'account_detail' acc.pk %}" style="text-decoration:none; display:block; background:var(--surface2); border-radius:12px; padding:14px; margin-bottom:10px; border:1px solid var(--border); transition:all .2s;"
+               onmouseover="this.style.borderColor='{{ acc.color }}'"
+               onmouseout="this.style.borderColor='var(--border)'">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:42px; height:42px; border-radius:10px; background:{{ acc.color }}22; display:flex; align-items:center; justify-content:center; border:1px solid {{ acc.color }}44;">{{ acc.icon|icon:"lg" }}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:13px; font-weight:600; color:var(--text);">{% tacc acc.name %}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">{% t acc.get_account_type_display %}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:15px; font-weight:700; color:{{ acc.color }};">{{ acc.balance|floatformat:0 }}</div>
+                        <div style="font-size:11px; color:var(--text-muted);">{{ acc.currency }}</div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state" style="padding:20px;">
+                <div class="empty-state-icon">{{ "credit-card"|icon:"xl" }}</div>
+                <div class="empty-state-title">{% t "Hisob raqam yo'q" %}</div>
+                <a href="{% url 'account_create' %}" class="btn btn-primary btn-sm"><i class="ti ti-plus"></i> {% t "Qo'shish" %}</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Qarzlar -->
+    <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <div class="card-title" style="margin:0;"><span class="title-icon"><i class="ti ti-wallet"></i></span> {% t "Qarz va haqdorlik" %}</div>
+            <a href="{% url 'debt_list' %}" class="btn btn-secondary btn-sm">{% t "Barchasi" %}</a>
+        </div>
+
+        <div class="grid-2" style="gap:12px; margin-bottom:16px;">
+            <div style="background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.2); border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">{% t "Olishim kerak" %}</div>
+                <div style="font-size:18px; font-weight:700; color:var(--green);">{{ total_given|floatformat:0 }}</div>
+                <div style="font-size:11px; color:var(--text-muted);">{% t "so'm" %}</div>
+            </div>
+            <div style="background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.2); border-radius:10px; padding:14px; text-align:center;">
+                <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">{% t "To'lashim kerak" %}</div>
+                <div style="font-size:18px; font-weight:700; color:var(--red);">{{ total_taken|floatformat:0 }}</div>
+                <div style="font-size:11px; color:var(--text-muted);">{% t "so'm" %}</div>
+            </div>
+        </div>
+
+        {% if open_debts_given %}
+            {% for debt in open_debts_given %}
+            <div style="display:flex; align-items:center; gap:10px; padding:10px; background:var(--surface2); border-radius:10px; margin-bottom:8px;">
+                <div style="font-size:18px;"><i class="ti ti-arrow-down-right"></i></div>
+                <div style="flex:1;">
+                    <div style="font-size:13px; font-weight:600;">{{ debt.person_name }}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">{{ debt.date }}</div>
+                </div>
+                <div style="font-size:14px; font-weight:700; color:var(--green);">+{{ debt.remaining_amount|floatformat:0 }}</div>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if open_debts_taken %}
+            {% for debt in open_debts_taken %}
+            <div style="display:flex; align-items:center; gap:10px; padding:10px; background:var(--surface2); border-radius:10px; margin-bottom:8px;">
+                <div style="font-size:18px;"><i class="ti ti-arrow-up-right"></i></div>
+                <div style="flex:1;">
+                    <div style="font-size:13px; font-weight:600;">{{ debt.person_name }}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">{{ debt.date }}</div>
+                </div>
+                <div style="font-size:14px; font-weight:700; color:var(--red);">-{{ debt.remaining_amount|floatformat:0 }}</div>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if not open_debts_given and not open_debts_taken %}
+            <div class="empty-state" style="padding:20px;">
+                <div><i class="ti ti-wallet"></i> {% t "Faol qarzlar yo'q" %}</div>
+            </div>
+        {% endif %}
+
+        <a href="{% url 'debt_create' %}" class="btn btn-secondary btn-sm" style="width:100%; justify-content:center; margin-top:8px;"><i class="ti ti-plus"></i> {% t "Qarz qo'shish" %}</a>
+    </div>
+</div>
+
+<!-- Byudjetlar -->
+{% if budgets %}
+<div class="card" style="margin-bottom:20px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div class="card-title" style="margin:0;"><span class="title-icon"><i class="ti ti-target"></i></span> {% t "Oylik byudjet" %} — {{ current_month }}</div>
+        <a href="{% url 'budget_list' %}" class="btn btn-secondary btn-sm">{% t "Barchasi" %}</a>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">
+        {% for b in budgets %}
+        {% with pct=b.get_percentage %}
+        <div style="background:var(--surface2); border-radius:12px; padding:16px; border:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <div style="font-size:13px; font-weight:600;">{{ b.name }}</div>
+                <div style="font-size:12px; color:{% if pct >= 90 %}var(--red){% elif pct >= 75 %}var(--yellow){% else %}var(--green){% endif %}; font-weight:700;">{{ pct }}%</div>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width:{{ pct }}%; background:{% if pct >= 90 %}var(--red){% elif pct >= 75 %}var(--yellow){% else %}var(--accent){% endif %};"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--text-muted);">
+                <span>{% if b.budget_type == 'expense' %}{% t "Sarflandi" %}: {{ b.get_spent|floatformat:0 }}{% else %}{% t "Tushdi" %}: {{ b.get_income|floatformat:0 }}{% endif %}</span>
+                <span>{% t "Reja" %}: {{ b.amount|floatformat:0 }}</span>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Oxirgi tranzaksiyalar -->
+<div class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div class="card-title" style="margin:0;"><span class="title-icon"><i class="ti ti-list-details"></i></span> {% t "Oxirgi tranzaksiyalar" %}</div>
+        <a href="{% url 'transaction_list' %}" class="btn btn-secondary btn-sm">{% t "Barchasi" %} <i class="ti ti-arrow-right"></i></a>
+    </div>
+
+    {% if recent_transactions %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{% t "Tur" %}</th>
+                    <th>{% t "Tavsif" %}</th>
+                    <th>{% t "Kategoriya" %}</th>
+                    <th>{% t "Hisob raqamlar" %}</th>
+                    <th>{% t "Sana" %}</th>
+                    <th style="text-align:right;">{% t "Summa" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in recent_transactions %}
+                <tr>
+                    <td>
+                        {% if t.transaction_type == 'expense' %}
+                            <span class="badge badge-red"><i class="ti ti-arrow-down-right"></i> {% t "Xarajat" %}</span>
+                        {% elif t.transaction_type == 'income' %}
+                            <span class="badge badge-green"><i class="ti ti-arrow-up-right"></i> {% t "Daromad" %}</span>
+                        {% else %}
+                            <span class="badge badge-blue"><i class="ti ti-arrows-left-right"></i> {% t "Transfer" %}</span>
+                        {% endif %}
+                    </td>
+                    <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ t.description|default:"-" }}</td>
+                    <td>{% if t.category %}{{ t.category.icon|icon:"sm" }} {% tcat t.category.name %}{% else %}-{% endif %}</td>
+                    <td style="font-size:12px; color:var(--text-muted);">{% if t.account %}{% tacc t.account.name %}{% else %}-{% endif %}</td>
+                    <td style="font-size:12px; color:var(--text-muted);">{{ t.date }}</td>
+                    <td style="text-align:right; font-weight:700; color:{% if t.transaction_type == 'expense' %}var(--red){% elif t.transaction_type == 'income' %}var(--green){% else %}#60a5fa{% endif %};">
+                        {% if t.transaction_type == 'expense' %}-{% elif t.transaction_type == 'income' %}+{% endif %}{{ t.amount|floatformat:0 }} {{ t.currency }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">{{ "list-details"|icon:"xl" }}</div>
+        <div class="empty-state-title">{% t "Tranzaksiyalar yo'q" %}</div>
+        <div class="empty-state-desc">{% t "Birinchi tranzaksiyangizni qo'shing" %}</div>
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i> {% t "Qo'shish" %}</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const incomeExpense = {{ income_expense_json|safe }};
+const expenseByCategory = {{ expense_by_category_json|safe }};
+const monthlyTrend = {{ monthly_trend_json|safe }};
+const accountBreakdown = {{ account_breakdown_json|safe }};
+
+const chartLabelStyle = { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } };
+const chartGrid = { color: 'rgba(42,42,58,0.5)' };
+const charts = [];
+
+const incomeEl = document.getElementById('incomeExpenseChart');
+if (incomeEl) {
+    charts.push(new Chart(incomeEl.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: incomeExpense.labels,
+            datasets: [{
+                label: 'UZS',
+                data: incomeExpense.values,
+                backgroundColor: ['rgba(34,197,94,0.7)', 'rgba(239,68,68,0.7)'],
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 44,
+                categoryPercentage: 0.6,
+                barPercentage: 0.7,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: chartLabelStyle, position: 'bottom' },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toLocaleString()} UZS` } }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: chartLabelStyle },
+                y: { grid: chartGrid, ticks: chartLabelStyle, beginAtZero: true },
+            }
+        }
+    }));
+}
+
+const categoryEl = document.getElementById('expenseByCategoryChart');
+if (categoryEl && expenseByCategory.length) {
+    charts.push(new Chart(categoryEl.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: expenseByCategory.map(i => i.name),
+            datasets: [{
+                data: expenseByCategory.map(i => i.value),
+                backgroundColor: expenseByCategory.map(i => i.color),
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: chartLabelStyle, position: 'bottom' } },
+            cutout: '68%',
+            radius: '90%',
+        }
+    }));
+}
+
+const trendEl = document.getElementById('monthlyTrendChart');
+if (trendEl) {
+    charts.push(new Chart(trendEl.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: monthlyTrend.map(i => i.label),
+            datasets: [{
+                label: '{% t "Xarajat" %}',
+                data: monthlyTrend.map(i => i.value),
+                borderColor: 'rgba(239,68,68,0.9)',
+                backgroundColor: 'rgba(239,68,68,0.15)',
+                tension: 0.35,
+                fill: true,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: chartLabelStyle, position: 'bottom' } },
+            scales: {
+                x: { grid: { display: false }, ticks: chartLabelStyle },
+                y: { grid: chartGrid, ticks: chartLabelStyle, beginAtZero: true },
+            }
+        }
+    }));
+}
+
+const accountEl = document.getElementById('accountBreakdownChart');
+if (accountEl && accountBreakdown.length) {
+    charts.push(new Chart(accountEl.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: accountBreakdown.map(i => i.name),
+            datasets: [{
+                data: accountBreakdown.map(i => i.value),
+                backgroundColor: accountBreakdown.map(i => i.color),
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: chartLabelStyle, position: 'bottom' } },
+            cutout: '70%',
+            radius: '90%',
+        }
+    }));
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        charts.forEach(c => c.resize());
+    }, 200);
+});
+</script>
+{% endblock %}

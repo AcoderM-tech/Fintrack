@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Qarz qo'shish" %}{% endblock %}
+{% block page_title %}<span class="title-icon"><i class="ti ti-wallet"></i></span> {% t "Yangi qarz" %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'debt_list' %}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:540px; margin:0 auto;">
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-label">{% t "Qarz turi *" %}</label>
+            <div class="tabs">
+                <button type="button" class="tab-btn active" id="givenBtn" onclick="setDebtType('given')"><i class="ti ti-wallet"></i>{% t "Men bergan (olishim kerak)" %}</button>
+                <button type="button" class="tab-btn" id="takenBtn" onclick="setDebtType('taken')"><i class="ti ti-wallet"></i>{% t "Men olgan (to'lashim kerak)" %}</button>
+            </div>
+            <input type="hidden" name="debt_type" id="debtType" value="given">
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{% t "Shaxs ismi *" %}</label>
+                <input type="text" name="person_name" class="form-control" placeholder="{% t "To'liq ismi" %}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Telefon raqami" %}</label>
+                <input type="tel" name="person_phone" class="form-control" placeholder="{% t "+998..." %}">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{% t "Summa *" %}</label>
+                <input type="number" name="amount" class="form-control" placeholder="0" min="0" step="any" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Valyuta" %}</label>
+                <select name="currency" class="form-control">
+                    <option value="UZS">{% t "UZS - So'm" %}</option>
+                    <option value="USD">{% t "USD - Dollar" %}</option>
+                    <option value="EUR">{% t "EUR - Yevro" %}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{% t "Sana *" %}</label>
+                <input type="date" name="date" class="form-control" value="{{ today }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Qaytarish muddati" %}</label>
+                <input type="date" name="due_date" class="form-control">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Hisob raqam (ixtiyoriy)" %}</label>
+            <select name="account" class="form-control">
+                <option value="">{% t "- Belgilanmagan -" %}</option>
+                {% for acc in accounts %}
+                    <option value="{{ acc.pk }}">{% tacc acc.name %}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Izoh" %}</label>
+            <textarea name="description" class="form-control" placeholder="{% t "Sababi, shartlari..." %}"></textarea>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+            <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;"><i class="ti ti-check"></i>{% t "Qayd etish" %}</button>
+            <a href="{% url 'debt_list' %}" class="btn btn-secondary"><i class="ti ti-x"></i>{% t "Bekor" %}</a>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setDebtType(type) {
+    document.getElementById('debtType').value = type;
+    document.getElementById('givenBtn').classList.toggle('active', type === 'given');
+    document.getElementById('takenBtn').classList.toggle('active', type === 'taken');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,342 @@
+{% load core_tags %}
+<!DOCTYPE html>
+<html lang="{{ request.LANGUAGE_CODE|default:'uz' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 | FinTrack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+    <script>
+        (function() {
+            try {
+                const stored = localStorage.getItem('fintrack_theme');
+                if (stored === 'light') document.documentElement.setAttribute('data-theme', 'light');
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        :root {
+            --bg: #0a0e27;
+            --surface: rgba(21, 25, 50, 0.7);
+            --surface2: rgba(15, 23, 42, 0.65);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #ffffff;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent2: #8b5cf6;
+            --shadow-soft: 0 18px 40px rgba(2, 6, 23, 0.35);
+            --topbar-bg: rgba(10, 14, 39, 0.6);
+            --lang-pill-bg: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(15,23,42,0.7));
+            --lang-pill-border: rgba(122, 165, 255, 0.25);
+            --lang-pill-shadow: inset 0 0 20px rgba(59, 130, 246, 0.12), 0 10px 24px rgba(2, 6, 23, 0.35);
+            --lang-dot-bg: rgba(255, 255, 255, 0.06);
+            --lang-dot-border: rgba(255, 255, 255, 0.1);
+            --lang-dot-color: #cbd5f5;
+            --lang-dot-hover-border: rgba(122, 165, 255, 0.6);
+            --lang-dot-hover-color: #e2ebff;
+            --lang-dot-active-bg: #ffffff;
+            --lang-dot-active-color: #0a0e27;
+            --lang-dot-active-border: rgba(255, 255, 255, 0.9);
+            --lang-dot-active-shadow: 0 10px 18px rgba(2, 6, 23, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.35);
+        }
+        html[data-theme="light"] {
+            --bg: #f7f8fb;
+            --surface: rgba(255, 255, 255, 0.92);
+            --surface2: rgba(248, 250, 252, 0.98);
+            --border: rgba(15, 23, 42, 0.12);
+            --text: #0f172a;
+            --text-muted: #475569;
+            --accent: #2563eb;
+            --accent2: #4f46e5;
+            --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.12);
+            --topbar-bg: rgba(255, 255, 255, 0.8);
+            --lang-pill-bg: linear-gradient(135deg, rgba(15,23,42,0.04), rgba(148,163,184,0.22));
+            --lang-pill-border: rgba(37, 99, 235, 0.25);
+            --lang-pill-shadow: inset 0 0 14px rgba(37, 99, 235, 0.08), 0 8px 18px rgba(15, 23, 42, 0.08);
+            --lang-dot-bg: rgba(255, 255, 255, 0.92);
+            --lang-dot-border: rgba(15, 23, 42, 0.18);
+            --lang-dot-color: #0f172a;
+            --lang-dot-hover-border: rgba(37, 99, 235, 0.6);
+            --lang-dot-hover-color: #0f172a;
+            --lang-dot-active-bg: #2563eb;
+            --lang-dot-active-color: #ffffff;
+            --lang-dot-active-border: rgba(37, 99, 235, 0.4);
+            --lang-dot-active-shadow: 0 12px 20px rgba(37, 99, 235, 0.25), 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(1200px 600px at 10% 10%, rgba(59,130,246,0.18), transparent 55%),
+                        radial-gradient(900px 500px at 85% 80%, rgba(139,92,246,0.18), transparent 55%),
+                        var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--topbar-bg);
+            backdrop-filter: blur(20px);
+        }
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: 0.2px;
+        }
+        .logo-mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .logo-mark .ti { font-size: 18px; }
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all .2s ease;
+        }
+        .theme-toggle .ti { font-size: 18px; }
+        .theme-toggle:hover { border-color: rgba(37,99,235,0.4); box-shadow: 0 8px 20px rgba(37,99,235,0.2); }
+
+        .lang-switch { display: inline-flex; align-items: center; }
+        .lang-flags {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            border-radius: 999px;
+            background: var(--lang-pill-bg);
+            border: 1px solid var(--lang-pill-border);
+            box-shadow: var(--lang-pill-shadow);
+        }
+        .lang-flag-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--lang-dot-bg);
+            border: 1px solid var(--lang-dot-border);
+            color: var(--lang-dot-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+        .lang-flag-dot:hover { border-color: var(--lang-dot-hover-border); color: var(--lang-dot-hover-color); }
+        .lang-flag-dot.active {
+            background: var(--lang-dot-active-bg);
+            color: var(--lang-dot-active-color);
+            border-color: var(--lang-dot-active-border);
+            box-shadow: var(--lang-dot-active-shadow);
+        }
+        .lang-flag-emoji { font-size: 12px; line-height: 1; }
+
+        .page-wrap {
+            flex: 1;
+            display: grid;
+            place-items: center;
+            padding: 32px 20px 60px;
+        }
+        .error-card {
+            width: min(720px, 92vw);
+            padding: 42px 36px;
+            border-radius: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-soft);
+            text-align: center;
+        }
+        .error-code {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .error-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 10px 0 6px;
+        }
+        .error-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        .error-path {
+            margin-top: 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--surface2);
+            border: 1px dashed var(--border);
+            padding: 8px 12px;
+            border-radius: 10px;
+            word-break: break-all;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 22px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text);
+            background: var(--surface2);
+            transition: all .2s ease;
+        }
+        .btn.primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            border: none;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(37,99,235,0.2); }
+        @media (max-width: 640px) {
+            .error-card { padding: 34px 22px; }
+            .topbar { padding: 12px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <a href="{% url 'landing' %}" class="logo">
+            <span class="logo-mark"><i class="ti ti-diamond"></i></span>
+            FinTrack
+        </a>
+        <div class="topbar-actions">
+            <button type="button" class="theme-toggle" id="themeToggle" aria-label="{% t "Tungi rejim" %}" title="{% t "Tungi rejim" %}">
+                <i class="ti ti-moon"></i>
+            </button>
+            {% include 'partials/language_switcher.html' %}
+        </div>
+    </header>
+
+    <main class="page-wrap">
+        <div class="error-card">
+            <div class="error-code">404</div>
+            <div class="error-title">{% t "Sahifa topilmadi" %}</div>
+            <div class="error-desc">{% t "Kechirasiz, siz qidirayotgan sahifa mavjud emas yoki o'chirilgan." %}</div>
+            <div class="error-path">{{ request.path }}</div>
+            <div class="actions">
+                {% if request.user.is_authenticated %}
+                    <a class="btn" href="{% url 'dashboard' %}?scope=personal"><i class="ti ti-home"></i>{% t "Dashboardga qaytish" %}</a>
+                {% else %}
+                    <a class="btn" href="{% url 'landing' %}"><i class="ti ti-home"></i>{% t "Bosh sahifaga qaytish" %}</a>
+                {% endif %}
+                <a class="btn primary" href="javascript:history.back()"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (function initTheme() {
+            const THEME_KEY = 'fintrack_theme';
+            const toggle = document.getElementById('themeToggle');
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+            function applyTheme(theme) {
+                const resolved = theme === 'light' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', resolved);
+                if (metaTheme) metaTheme.setAttribute('content', resolved === 'light' ? '#f5f7fb' : '#0a0e27');
+                if (toggle) {
+                    toggle.innerHTML = resolved === 'light'
+                        ? '<i class="ti ti-moon"></i>'
+                        : '<i class="ti ti-sun"></i>';
+                    toggle.setAttribute('aria-label', resolved === 'light' ? '{% t "Tungi rejim" %}' : '{% t "Kunduzgi rejim" %}');
+                    toggle.setAttribute('title', resolved === 'light' ? '{% t "Tungi rejim" %}' : '{% t "Kunduzgi rejim" %}');
+                }
+            }
+
+            const stored = localStorage.getItem(THEME_KEY);
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(stored || (prefersDark ? 'dark' : 'light'));
+
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    localStorage.setItem(THEME_KEY, next);
+                    applyTheme(next);
+                });
+            }
+        })();
+
+        function initLangSwitch(root = document) {
+            root.querySelectorAll('.lang-switch').forEach((form) => {
+                if (form.dataset.langBound) return;
+                form.dataset.langBound = '1';
+
+                const input = form.querySelector('input[name="language"]');
+                const dots = Array.from(form.querySelectorAll('.lang-flag-dot'));
+                const order = (form.dataset.langOrder || 'uz,ru,en')
+                    .split(',')
+                    .map(s => s.trim().toLowerCase())
+                    .filter(Boolean);
+
+                const submitForm = () => {
+                    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                    else form.submit();
+                };
+
+                const applyLang = (lang, submit) => {
+                    const resolved = order.includes(lang) ? lang : (order[0] || 'uz');
+                    if (input) input.value = resolved;
+                    dots.forEach(dot => dot.classList.toggle('active', dot.dataset.lang === resolved));
+                    if (submit) submitForm();
+                };
+
+                const current = (input && input.value) || order[0] || 'uz';
+                applyLang(current, false);
+                dots.forEach(dot => {
+                    dot.addEventListener('click', () => {
+                        const lang = (dot.dataset.lang || '').toLowerCase();
+                        if (!lang) return;
+                        applyLang(lang, true);
+                    });
+                });
+            });
+        }
+        initLangSwitch();
+    </script>
+</body>
+</html>

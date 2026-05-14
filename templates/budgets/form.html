@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Byudjet yaratish" %}{% endblock %}
+{% block page_title %}<span class="title-icon"><i class="ti ti-target"></i></span> {% t "Yangi byudjet" %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'budget_list' %}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:500px; margin:0 auto;">
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-label">{% t "Byudjet nomi *" %}</label>
+            <input type="text" name="name" class="form-control" placeholder="{% t "Masalan: Oziq-ovqat xarajat limiti" %}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Turi" %}</label>
+            <select name="budget_type" class="form-control">
+                <option value="expense">{% t "Xarajat limiti" %}</option>
+                <option value="income">{% t "Daromad maqsadi" %}</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Kategoriya (ixtiyoriy)" %}</label>
+            <select name="category" class="form-control">
+                <option value="">{% t "- Barcha kategoriyalar -" %}</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.pk }}">{% tcat cat.name %}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{% t "Rejalashtirilgan summa *" %}</label>
+                <input type="number" name="amount" class="form-control" placeholder="0" min="0" step="any" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Valyuta" %}</label>
+                <select name="currency" class="form-control">
+                    <option value="UZS">{% t "UZS - So'm" %}</option>
+                    <option value="USD">{% t "USD - Dollar" %}</option>
+                    <option value="EUR">{% t "EUR - Yevro" %}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label class="form-label">{% t "Oy *" %}</label>
+                <select name="month" class="form-control">
+                    {% for m in "1,2,3,4,5,6,7,8,9,10,11,12"|split:"," %}
+                    <option value="{{ m }}" {% if today.month == m|add:0 %}selected{% endif %}>{{ m }}-{% t "oy" %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Yil *" %}</label>
+                <input type="number" name="year" class="form-control" value="{{ today.year }}" min="2020" max="2030">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:8px;">
+            <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;"><i class="ti ti-check"></i>{% t "Yaratish" %}</button>
+            <a href="{% url 'budget_list' %}" class="btn btn-secondary"><i class="ti ti-x"></i>{% t "Bekor" %}</a>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}

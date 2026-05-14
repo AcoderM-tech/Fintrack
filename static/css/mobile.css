@@ -1,0 +1,337 @@
+/* ═══════════════════════════════════════════════════════════════
+   FinTrack — mobile.css
+   Faqat mobil va kichik ekranlar uchun (≤ 768px).
+   Desktop ko'rinishiga HECH QANDAY ta'sir qilmaydi.
+
+   Bog'lash tartibi (base.html ichida):
+     <link rel="stylesheet" href="{% static 'css/base.css' %}">
+     <link rel="stylesheet" href="{% static 'css/mobile.css' %}">
+
+   Tuzilish:
+     1. Tablet drawer (≤ 1024px) — already in base.css, left there
+     2. Mobile ≤ 768px:
+        a) Sidebar — fixed drawer
+        b) Main content — full width + bottom-nav safe-area
+        c) Topbar — compact single row
+        d) Sticky Bottom Navigation
+        e) Mobile nav items + FAB
+        f) Components (stats, cards, grid, table→card, forms, tabs)
+     3. Very small phones — ≤ 400px / ≤ 360px
+═══════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════
+   MOBILE  ≤ 768px
+════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+    /* ── Sidebar: fixed drawer, slide-in from left ── */
+    .sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        position: fixed !important;
+        top: 0; bottom: 0; left: 0;
+        width: min(82vw, 290px) !important;
+        flex-basis: 0 !important;
+        transform: translateX(-100%) !important;
+        z-index: 200;
+        overflow-y: auto;
+        transition: transform .3s cubic-bezier(.25, .46, .45, .94) !important;
+    }
+    .sidebar.open {
+        transform: translateX(0) !important;
+    }
+
+    /* Sidebar ichidagi desktop-only elementlarni yashir */
+    .sidebar-nav .nav-section-label,
+    .sidebar-nav .lang-switch,
+    .sidebar-nav form[class*="lang"] {
+        display: none !important;
+    }
+
+    /* ── Hamburger topbarda kerak emas ── */
+    .hamburger { display: none !important; }
+
+    /* ── Main: to'liq kenglik, bottom nav uchun pastda bo'sh joy ── */
+    .dashboard-frame { overflow: visible !important; }
+    .main {
+        width: 100% !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        /* bottom nav balandligi + iOS safe area */
+        padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+    body { padding-bottom: 0; }
+
+    /* ── Topbar: bir qator, kompakt ── */
+    .topbar {
+        flex-wrap: nowrap !important;
+        padding: 8px 12px !important;
+        gap: 6px !important;
+        align-items: center;
+    }
+    .page-title {
+        font-size: 0.9rem !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        max-width: unset !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .title-icon { display: none !important; }
+
+    .topbar-actions {
+        flex-wrap: nowrap !important;
+        flex-shrink: 0 !important;
+        gap: 6px !important;
+    }
+
+    /* Foydalanuvchi: faqat avatar ko'rinadi */
+    .topbar-user {
+        padding: 4px 6px !important;
+        gap: 6px !important;
+        border: none !important;
+        background: transparent !important;
+    }
+    .topbar-user-info { display: none !important; }
+
+    /* Til tanlash topbardan yashiriladi */
+    .topbar-actions .lang-switch { display: none !important; }
+
+    /* Action tugmalari: icon-only */
+    .topbar-actions > .btn .ti + *,
+    .topbar-actions > .btn > span:not(.ti) { display: none; }
+    .topbar-actions > .btn {
+        padding: 6px 8px !important;
+        min-width: 32px !important;
+        justify-content: center !important;
+    }
+
+    /* Notification panel: to'liq kenglik */
+    .notif-panel {
+        right: -4px !important;
+        width: calc(100vw - 24px) !important;
+    }
+
+    /* ── Sticky Bottom Navigation ── */
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0; left: 0; right: 0;
+        z-index: 9999 !important;
+        height: calc(62px + env(safe-area-inset-bottom, 0px));
+        padding: 0 4px calc(env(safe-area-inset-bottom, 0px));
+        background: var(--menu-bg);
+        border-top: 1px solid var(--border);
+        backdrop-filter: blur(30px) saturate(180%);
+        -webkit-backdrop-filter: blur(30px) saturate(180%);
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -4px 24px rgba(2, 6, 23, 0.35);
+    }
+
+    /* Scroll-to-top: bottom nav ustida ── */
+    .scroll-top-btn {
+        bottom: calc(70px + env(safe-area-inset-bottom, 8px)) !important;
+        right: 12px !important;
+    }
+
+    /* ── Mobile nav items (Bosh, Harakatlar, Tahlil, Menyu) ── */
+    .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 8px 6px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: var(--text-muted);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-transform: uppercase;
+        transition: all .2s ease;
+        min-width: 48px;
+        flex: 1;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        position: relative;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-nav-item .ti {
+        font-size: 22px;
+        line-height: 1;
+        transition: transform .2s ease, filter .2s ease;
+    }
+    .mobile-nav-item:active { transform: scale(0.88); }
+
+    /* Active state */
+    .mobile-nav-item.active { color: var(--neon-cyan); }
+    .mobile-nav-item.active .ti {
+        transform: translateY(-2px);
+        filter: drop-shadow(0 0 6px var(--neon-cyan));
+    }
+    .mobile-nav-item.active::after {
+        content: '';
+        position: absolute;
+        bottom: 2px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px; height: 4px;
+        border-radius: 50%;
+        background: var(--neon-cyan);
+        box-shadow: 0 0 6px var(--neon-cyan);
+    }
+
+    /* Light theme */
+    html[data-theme="light"] .mobile-nav-item.active { color: var(--accent); }
+    html[data-theme="light"] .mobile-nav-item.active .ti { filter: none; }
+    html[data-theme="light"] .mobile-nav-item.active::after {
+        background: var(--accent);
+        box-shadow: none;
+    }
+
+    /* ── FAB — "Yangi" markaziy tugma ── */
+    .mobile-nav-fab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 3px;
+        text-decoration: none;
+        color: var(--text-muted);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        /* FAB circle qismini tepaga ko'taradi */
+        position: relative;
+        top: -10px;
+        flex: 1;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-nav-fab-circle {
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5),
+                    0 0 0 3px rgba(59, 130, 246, 0.15);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .mobile-nav-fab-circle .ti { font-size: 26px; color: #fff; }
+    .mobile-nav-fab:active .mobile-nav-fab-circle {
+        transform: scale(0.9);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+    }
+    .mobile-nav-fab-label { color: var(--text-muted); }
+
+    /* ── Component overrides ── */
+
+    /* Stats */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        margin-bottom: 12px !important;
+    }
+    .stat-card { padding: 12px 10px !important; border-radius: 12px !important; }
+    .stat-value { font-size: clamp(13px, 3.5vw, 18px) !important; word-break: break-all; }
+    .stat-label { font-size: 9px !important; margin-bottom: 4px !important; }
+    .stat-icon { display: none !important; }
+
+    /* Chart */
+    .chart-wrap {
+        height: clamp(150px, 42vw, 200px) !important;
+        min-height: 150px !important;
+    }
+
+    /* Grid layouts */
+    .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 10px !important; }
+    [style*="grid-template-columns: repeat(auto-fill"] {
+        grid-template-columns: 1fr !important;
+    }
+    .grid-auto { grid-template-columns: 1fr !important; }
+
+    /* Cards */
+    .card { padding: 12px !important; border-radius: 12px !important; }
+    .card-title { font-size: 0.82rem !important; margin-bottom: 8px !important; }
+    .content { padding: 12px 10px !important; }
+
+    /* Table → Card style */
+    .table-wrap { margin: 0 -10px; border-radius: 0; overflow-x: visible; }
+    table { width: 100%; }
+    table thead { display: none; }
+    table tbody { display: block; }
+    table tbody tr {
+        display: flex; flex-wrap: wrap; align-items: center;
+        padding: 10px 12px; border-bottom: 1px solid var(--border);
+        gap: 4px 8px; position: relative; background: transparent;
+    }
+    table tbody tr:last-child { border-bottom: none; }
+    table tbody tr:hover { background: var(--table-row-hover); }
+    table tbody td { display: inline-flex; align-items: center; padding: 0; border: none; }
+
+    table tbody td:nth-child(1) { flex: 0 0 auto; order: 1; }
+    table tbody td:nth-child(2) {
+        flex: 1 1 120px; order: 2; font-weight: 600; font-size: 13px;
+        min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    table tbody td:nth-child(3) { flex: 0 0 auto; order: 5; font-size: 11px; color: var(--text-muted); }
+    table tbody td:nth-child(4) { flex: 0 0 auto; order: 6; font-size: 11px; color: var(--text-muted); }
+    table tbody td:nth-child(5) { flex: 0 0 auto; order: 7; font-size: 10px; color: var(--text-muted); }
+    table tbody td:nth-child(6) { flex: 0 0 auto; order: 3; font-size: 14px; font-weight: 700; margin-left: auto; }
+    table tbody td:nth-child(7) { flex: 0 0 auto; order: 4; }
+    table tbody td:nth-child(7) .btn { padding: 4px 7px; }
+
+    /* Forms */
+    .form-control { font-size: 16px !important; } /* iOS auto-zoom oldini oladi */
+    .form-group { margin-bottom: 12px; }
+    form[style*="grid-template-columns"] { grid-template-columns: 1fr 1fr !important; }
+
+    /* Tabs */
+    .tabs {
+        overflow-x: auto; -webkit-overflow-scrolling: touch;
+        gap: 2px; padding: 3px; margin-bottom: 12px;
+    }
+    .tab-btn { flex: 0 0 auto; white-space: nowrap; padding: 7px 12px; font-size: 12px; }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    /* Progress */
+    .progress { height: 6px; }
+
+    /* Account/Budget/Debt grid cards */
+    div[style*="grid-template-columns: repeat(auto-fill, minmax(min(340px"] { grid-template-columns: 1fr !important; }
+    div[style*="grid-template-columns: repeat(auto-fill, minmax(280px"] { grid-template-columns: 1fr !important; }
+}
+
+/* ── Very small: filter form → 1 column ── */
+@media (max-width: 480px) {
+    form[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+}
+
+/* ════════════════════════════════════════════════════════
+   VERY SMALL PHONES  ≤ 400px
+════════════════════════════════════════════════════════ */
+@media (max-width: 400px) {
+    .stats-grid { gap: 6px; }
+    .stat-card { padding: 10px 8px; border-radius: 10px; }
+    .stat-value { font-size: 12px; }
+    .content { padding: 10px 8px; }
+    .card { padding: 10px; border-radius: 10px; }
+    .mobile-nav-item { min-width: 38px; padding: 6px 4px; }
+    .mobile-nav-item .ti { font-size: 19px; }
+    .mobile-nav-fab-circle { width: 46px; height: 46px; }
+    .mobile-nav-fab-circle .ti { font-size: 22px; }
+}
+
+/* ════════════════════════════════════════════════════════
+   VERY SMALL PHONES  ≤ 360px
+════════════════════════════════════════════════════════ */
+@media (max-width: 360px) {
+    .content { padding: 10px 8px; }
+    .stat-value { font-size: 13px; }
+    .mobile-nav-item { min-width: 36px; padding: 5px 4px; }
+}

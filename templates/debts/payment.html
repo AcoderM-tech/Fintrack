@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}{% t "To'lov qayd etish" %}{% endblock %}
+{% block page_title %}<span class="title-icon"><i class="ti ti-wallet"></i></span> {% t "To'lov qayd etish" %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'debt_list' %}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:480px; margin:0 auto;">
+
+<div style="background:var(--surface2); border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--border);">
+    <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">{% t "Qarz ma'lumotlari" %}</div>
+    <div style="font-weight:700; font-size:18px;">{{ debt.person_name }}</div>
+    <div style="margin-top:8px; display:flex; gap:16px; font-size:13px;">
+        <div><span style="color:var(--text-muted);">{% t "Jami" %}:</span> <strong>{{ debt.amount|floatformat:0 }} {{ debt.currency }}</strong></div>
+        <div><span style="color:var(--text-muted);">{% t "To'langan" %}:</span> <strong>{{ debt.paid_amount|floatformat:0 }}</strong></div>
+        <div><span style="color:var(--text-muted);">{% t "Qoldi" %}:</span> <strong style="color:{% if debt.debt_type == 'given' %}var(--green){% else %}var(--red){% endif %};">{{ debt.remaining_amount|floatformat:0 }}</strong></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title"><i class="ti ti-wallet"></i> {% t "To'lov ma'lumotlari" %}</div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label">{% t "To'langan summa *" %}</label>
+            <input type="number" name="amount" class="form-control" placeholder="0" min="0.01" step="any" 
+                   max="{{ debt.remaining_amount }}" required style="font-size:20px; font-weight:700;">
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+                {% t "Maksimal" %}: {{ debt.remaining_amount|floatformat:0 }} {{ debt.currency }}
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">{% t "Sana *" %}</label>
+            <input type="date" name="date" class="form-control" value="{{ today }}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">{% t "Izoh" %}</label>
+            <textarea name="notes" class="form-control" placeholder="{% t "Ixtiyoriy..." %}"></textarea>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;"><i class="ti ti-check"></i> {% t "To'lovni qayd etish" %}</button>
+            <a href="{% url 'debt_list' %}" class="btn btn-secondary"><i class="ti ti-x"></i>{% t "Bekor" %}</a>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Oila boshqaruvi" %}{% endblock %}
+{% block page_title %}<span class="title-icon"><i class="ti ti-users-group"></i></span> {% t "Oila boshqaruvi" %}{% endblock %}
+
+{% block content %}
+{% t "Jinsni tanlang" as gender_prompt %}
+{% if family_memberships and family_memberships|length > 1 %}
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><i class="ti ti-users-group"></i>{% t "Oila guruhini tanlash" %}</div>
+    <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input type="hidden" name="scope" value="family">
+        <select name="family_id" class="form-control" style="max-width:260px;" onchange="this.form.submit()">
+            {% for m in family_memberships %}
+            <option value="{{ m.family.id }}" {% if active_family and active_family.id == m.family.id %}selected{% endif %}>
+                {{ m.family.name }}
+                (
+                {% if m.user_id == m.family.created_by_id %}
+                    {% if m.role == 'son' or m.role == 'daughter' %}{% t "Bosh" %}{% else %}{% t m.get_role_display %}{% endif %}
+                {% else %}
+                    {% t m.get_role_display %}
+                {% endif %}
+                )
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+{% endif %}
+
+{% if active_family %}
+<div class="alert alert-info" style="margin-bottom:16px;">
+    {% t "Oila" %}: <strong>{{ active_family.name }}</strong>
+    {% if family_role_label %} ({% t "Sizning rolingiz" %}: {{ family_role_label }}){% endif %}
+</div>
+{% endif %}
+
+{% if not gender %}
+<div class="alert alert-warning" style="margin-bottom:16px;">
+    {% t "Oila bo'limidan foydalanish uchun avval profilingizda jinsni tanlang." %}
+</div>
+{% endif %}
+
+<div class="grid-2" style="margin-bottom:24px;">
+    <div class="card">
+        <div class="card-title"><i class="ti ti-circle-plus"></i>{% t "Yangi oila yaratish" %}</div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label class="form-label">{% t "Guruh nomi" %}</label>
+                <input type="text" name="name" class="form-control" placeholder="{% t "Masalan: Oilaviy byudjet" %}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Sizning rolingiz" %}</label>
+                <div class="form-control" style="display:flex; align-items:center; gap:6px;">
+                    {{ create_role_label|default:gender_prompt }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" {% if not gender %}disabled{% endif %}><i class="ti ti-plus"></i>{% t "Guruh yaratish" %}</button>
+        </form>
+    </div>
+    <div class="card">
+        <div class="card-title"><i class="ti ti-link"></i>{% t "Guruhga qo'shilish" %}</div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="join">
+            <div class="form-group">
+                <label class="form-label">{% t "Taklif kodi" %}</label>
+                <input type="text" name="invite_code" class="form-control" placeholder="XXXXXXXX" maxlength="8" style="font-family:monospace; letter-spacing:2px; text-transform:uppercase;" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">{% t "Sizning rolingiz" %}</label>
+                <div class="form-control" style="display:flex; align-items:center; gap:6px;">
+                    {{ join_role_label|default:gender_prompt }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-secondary" style="width:100%; justify-content:center;" {% if not gender %}disabled{% endif %}><i class="ti ti-arrow-right"></i>{% t "So'rov yuborish" %}</button>
+        </form>
+    </div>
+</div>
+
+{% if active_family %}
+<div class="card" style="margin-bottom:20px;" id="family-invite">
+    <div class="card-title"><i class="ti ti-user-plus"></i>{% t "A'zoni taklif qilish" %}</div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+        <div style="font-size:12px; color:var(--text-muted);">{% t "Taklif holati:" %}</div>
+        <div class="badge {% if active_family.invite_active %}badge-green{% else %}badge-yellow{% endif %}">
+            {% if active_family.invite_active %}{% t "Faol" %}{% else %}{% t "O'chirilgan" %}{% endif %}
+        </div>
+    </div>
+    {% if active_family.invite_active %}
+        <div style="font-family:monospace; background:var(--surface3); border-radius:8px; padding:8px 12px; font-size:16px; letter-spacing:2px; color:var(--accent); width:fit-content;">
+            {{ active_family.invite_code }}
+        </div>
+    {% else %}
+        <div style="font-size:12px; color:var(--text-muted);">{% t "Taklif kodi o'chirilgan. Ota yoqishi mumkin." %}</div>
+    {% endif %}
+    {% if family_role == 'father' %}
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="invite_regen">
+            <input type="hidden" name="family_id" value="{{ active_family.id }}">
+            <button type="submit" class="btn btn-secondary btn-sm">{% t "Yangi kod" %}</button>
+        </form>
+        {% if active_family.invite_active %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="invite_deactivate">
+            <input type="hidden" name="family_id" value="{{ active_family.id }}">
+            <button type="submit" class="btn btn-danger btn-sm">{% t "O'chirish" %}</button>
+        </form>
+        {% else %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="invite_activate">
+            <input type="hidden" name="family_id" value="{{ active_family.id }}">
+            <button type="submit" class="btn btn-secondary btn-sm">{% t "Yoqish" %}</button>
+        </form>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_group">
+            <input type="hidden" name="family_id" value="{{ active_family.id }}">
+            <button type="submit" class="btn btn-danger btn-sm">{% t "Guruhni o'chirish" %}</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title"><i class="ti ti-users-group"></i>{% t "Oila a'zolari" %}</div>
+    <div style="display:flex; gap:12px; padding:6px 8px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">
+        <div style="flex:1;">{% t "A'zo" %}</div>
+        <div style="width:120px;">{% t "Rol" %}</div>
+        <div style="width:140px; text-align:right;">{% t "Balans" %}</div>
+        <div style="width:160px; text-align:right;">{% t "Bu oy xarajat" %}</div>
+        <div style="width:220px;"></div>
+    </div>
+    {% for item in member_summaries %}
+        {% with m=item.member %}
+        <div style="display:flex; align-items:center; gap:12px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; margin-bottom:8px; background:var(--surface2); flex-wrap:wrap;">
+            <div style="flex:1; min-width:180px; font-size:12px; font-weight:600;">{{ m.user.get_full_name|default:m.user.username }}</div>
+            <div style="width:120px; font-size:11px; color:var(--text-muted);">
+                {% if m.user_id == active_family.created_by_id %}
+                    {% if m.role == 'son' or m.role == 'daughter' %}{% t "Bosh" %}{% else %}{% t m.get_role_display %}{% endif %}
+                {% else %}
+                    {% t m.get_role_display %}
+                {% endif %}
+            </div>
+            <div style="width:140px; text-align:right; font-size:12px; font-weight:600;">
+                {% if item.can_view_financials %}
+                    {{ item.balance|floatformat:0 }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            <div style="width:160px; text-align:right; font-size:12px; font-weight:600; color:var(--red);">
+                {% if item.can_view_financials %}
+                    {{ item.monthly_spent|floatformat:0 }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            {% if family_role == 'father' or family_role == 'mother' %}
+            {% if m.user_id != request.user.id %}
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="set_role">
+                    <input type="hidden" name="family_id" value="{{ active_family.id }}">
+                    <input type="hidden" name="member_id" value="{{ m.id }}">
+                    <select name="role" class="form-control" style="height:28px; padding:2px 6px; font-size:11px;">
+                        <option value="father" {% if m.role == 'father' %}selected{% endif %}>{% t "Ota" %}</option>
+                        <option value="mother" {% if m.role == 'mother' %}selected{% endif %}>{% t "Ona" %}</option>
+                        <option value="son" {% if m.role == 'son' %}selected{% endif %}>{% t "O'g'il" %}</option>
+                        <option value="daughter" {% if m.role == 'daughter' %}selected{% endif %}>{% t "Qiz" %}</option>
+                    </select>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="padding:2px 6px;">{% t "Saqlash" %}</button>
+                </form>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_member">
+                    <input type="hidden" name="family_id" value="{{ active_family.id }}">
+                    <input type="hidden" name="member_id" value="{{ m.id }}">
+                    <button type="submit" class="btn btn-danger btn-sm" style="padding:2px 6px;">{% t "O'chirish" %}</button>
+                </form>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endwith %}
+    {% empty %}
+        <div class="empty-state">
+            <div class="empty-state-title">{% t "A'zolar yo'q" %}</div>
+        </div>
+    {% endfor %}
+</div>
+
+{% endif %}
+{% if pending_requests %}
+<div class="card" style="margin-top:20px;">
+    <div class="card-title"><i class="ti ti-user-check"></i> {% t "Kutilayotgan so'rovlar" %}</div>
+    {% for req in pending_requests %}
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; background:var(--surface2);">
+        <div style="font-size:12px; font-weight:600;">
+            {{ req.user.username }} → {{ req.family.name }} ({% t req.get_role_display %})
+        </div>
+        <div style="display:flex; gap:6px;">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="approve_request">
+                <input type="hidden" name="request_id" value="{{ req.id }}">
+                <button type="submit" class="btn btn-secondary btn-sm">{% t "Tasdiqlash" %}</button>
+            </form>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reject_request">
+                <input type="hidden" name="request_id" value="{{ req.id }}">
+                <button type="submit" class="btn btn-danger btn-sm">{% t "Rad etish" %}</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

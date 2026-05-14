@@ -1,0 +1,61 @@
+# FinTrack — systemd service for Gunicorn
+# File: /etc/systemd/system/fintrack.service
+#
+# Setup:
+#   sudo cp deploy/fintrack.service /etc/systemd/system/fintrack.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable fintrack
+#   sudo systemctl start fintrack
+#
+# Logs:
+#   sudo journalctl -u fintrack -f
+
+[Unit]
+Description=FinTrack Gunicorn application server
+After=network.target postgresql.service redis.service
+Requires=network.target
+
+[Service]
+Type=notify
+
+# ── User / Group ───────────────────────────────────────────────────────────────
+# Change to the system user that owns the project files
+User=www-data
+Group=www-data
+
+# ── Working directory ─────────────────────────────────────────────────────────
+WorkingDirectory=/path/to/fintrack_mobile
+
+# ── Environment ───────────────────────────────────────────────────────────────
+# Load .env variables directly — adjust path as needed
+EnvironmentFile=/path/to/fintrack_mobile/.env
+
+# ── Runtime directory for Unix socket ─────────────────────────────────────────
+RuntimeDirectory=fintrack
+RuntimeDirectoryMode=0755
+
+# ── Start command ─────────────────────────────────────────────────────────────
+ExecStart=/path/to/venv/bin/gunicorn \
+    fintrack.wsgi:application \
+    -c /path/to/fintrack_mobile/gunicorn.conf.py \
+    --bind unix:/run/fintrack/gunicorn.sock
+
+# ── Graceful reload ───────────────────────────────────────────────────────────
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=30
+
+# ── Restart policy ────────────────────────────────────────────────────────────
+Restart=on-failure
+RestartSec=5s
+
+# ── Security hardening ────────────────────────────────────────────────────────
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/path/to/fintrack_mobile/media
+ReadWritePaths=/path/to/fintrack_mobile/staticfiles
+ReadWritePaths=/run/fintrack
+
+[Install]
+WantedBy=multi-user.target

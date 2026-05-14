@@ -1,0 +1,25 @@
+{% with lang=request.LANGUAGE_CODE|default:'uz' %}
+<form method="post" action="{% url 'set_language' %}" class="lang-switch" data-lang-order="uz,ru,en">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <input type="hidden" name="language" value="{{ lang }}">
+
+    <div class="lang-flags" aria-label="{% t "Interfeys tili" %}">
+        <button type="button" class="lang-flag-dot {% if lang == 'uz' %}active{% endif %}"
+                data-lang="uz" data-label="O'zbek" data-flag="&#x1F1FA;&#x1F1FF;"
+                aria-label="O'zbek" title="O'zbek">
+            <span class="lang-flag-emoji">UZ</span>
+        </button>
+        <button type="button" class="lang-flag-dot {% if lang == 'ru' %}active{% endif %}"
+                data-lang="ru" data-label="&#x0420;&#x0443;&#x0441;&#x0441;&#x043A;&#x0438;&#x0439;" data-flag="&#x1F1F7;&#x1F1FA;"
+                aria-label="&#x0420;&#x0443;&#x0441;&#x0441;&#x043A;&#x0438;&#x0439;" title="&#x0420;&#x0443;&#x0441;&#x0441;&#x043A;&#x0438;&#x0439;">
+            <span class="lang-flag-emoji">&#x0420;&#x0423;</span>
+        </button>
+        <button type="button" class="lang-flag-dot {% if lang == 'en' %}active{% endif %}"
+                data-lang="en" data-label="English" data-flag="&#x1F1FA;&#x1F1F8;"
+                aria-label="English" title="English">
+            <span class="lang-flag-emoji">EN</span>
+        </button>
+    </div>
+</form>
+{% endwith %}

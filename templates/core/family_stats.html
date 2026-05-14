@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}{% t "A'zolar statistikasi" %}{% endblock %}
+{% block page_title %}
+<span class="title-icon"><i class="ti ti-chart-bar"></i></span> {% t "A'zolar statistikasi" %}
+{% endblock %}
+
+{% block content %}
+{% if family_memberships and family_memberships|length > 1 %}
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><i class="ti ti-users-group"></i>{% t "Oila guruhini tanlash" %}</div>
+    <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input type="hidden" name="scope" value="family">
+        <select name="family_id" class="form-control" style="max-width:260px;" onchange="this.form.submit()">
+            {% for m in family_memberships %}
+            <option value="{{ m.family.id }}" {% if active_family and active_family.id == m.family.id %}selected{% endif %}>
+                {{ m.family.name }}
+                (
+                {% if m.user_id == m.family.created_by_id %}
+                    {% if m.role == 'son' or m.role == 'daughter' %}{% t "Bosh" %}{% else %}{% t m.get_role_display %}{% endif %}
+                {% else %}
+                    {% t m.get_role_display %}
+                {% endif %}
+                )
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+{% endif %}
+
+{% if active_family %}
+<div class="alert alert-info" style="margin-bottom:16px;">
+    {% t "Oila" %}: <strong>{{ active_family.name }}</strong>{% if family_role_label %} ({% t "Sizning rolingiz" %}: {{ family_role_label }}){% endif %}
+</div>
+{% endif %}
+
+{% if can_view_stats %}
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-title"><i class="ti ti-filter"></i>{% t "A'zoni tanlash" %}</div>
+    <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        {% if finance_scope == 'family' %}
+        <input type="hidden" name="scope" value="family">
+        {% if active_family %}
+        <input type="hidden" name="family_id" value="{{ active_family.id }}">
+        {% endif %}
+        {% endif %}
+        <select name="member" class="form-control" style="max-width:240px;">
+            <option value="">{% t "A'zoni tanlang" %}</option>
+            {% for m in members %}
+            <option value="{{ m.id }}" {% if selected_member and selected_member.id == m.id %}selected{% endif %}>
+                {{ m.user.get_full_name|default:m.user.username }}
+                ({% if m.user_id == family.created_by_id %}{% if m.role == 'son' or m.role == 'daughter' %}{% t "Bosh" %}{% else %}{% t m.get_role_display %}{% endif %}{% else %}{% t m.get_role_display %}{% endif %})
+            </option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-primary" type="submit">{% t "Ko'rsatish" %}</button>
+    </form>
+</div>
+{% endif %}
+
+{% if not can_view_stats %}
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="ti ti-shield-lock"></i></div>
+            <div class="empty-state-title">{% t "Oilaviy statistika faqat ota-onalar uchun mavjud." %}</div>
+            <div class="empty-state-desc">{% t "Siz faqat o'zingizning shaxsiy moliyaviy ma'lumotlaringizni ko'ra olasiz." %}</div>
+        </div>
+    </div>
+{% elif not selected_member %}
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="ti ti-users"></i></div>
+            <div class="empty-state-title">{% t "A'zo tanlang" %}</div>
+            <div class="empty-state-desc">{% t "Statistikani ko'rish uchun a'zoni tanlang." %}</div>
+        </div>
+    </div>
+{% else %}
+    <div class="stats-grid" style="margin-bottom:16px;">
+        <div class="stat-card purple">
+            <div class="stat-label">{% t "A'zo" %}</div>
+            <div class="stat-value">{{ stats.member_name }}</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">{% t "Daromad" %}</div>
+            <div class="stat-value amount-green">+{{ stats.total_income|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-label">{% t "Xarajat" %}</div>
+            <div class="stat-value amount-red">-{{ stats.total_expense|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card teal">
+            <div class="stat-label">{% t "Sof natija" %}</div>
+            <div class="stat-value">{% if stats.net >= 0 %}+{% endif %}{{ stats.net|floatformat:0 }}</div>
+        </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card">
+            <div class="card-title"><i class="ti ti-chart-line"></i>{% t "Oylik xarajat trendi" %}</div>
+            <div class="chart-wrap">
+                <canvas id="memberTrendChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title"><i class="ti ti-chart-pie"></i>{% t "Kategoriya bo'yicha xarajat" %}</div>
+            <div class="chart-wrap">
+                <canvas id="memberPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const trendData = {{ trend_data_json|safe }};
+const pieData = {{ pie_data_json|safe }};
+
+const chartLabelStyle = { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } };
+const chartGrid = { color: 'rgba(42,42,58,0.5)' };
+
+const trendEl = document.getElementById('memberTrendChart');
+if (trendEl && trendData.length) {
+    new Chart(trendEl.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: trendData.map(i => i.label),
+            datasets: [{
+                label: '{% t "Xarajat" %}',
+                data: trendData.map(i => i.value),
+                borderColor: 'rgba(239,68,68,0.9)',
+                backgroundColor: 'rgba(239,68,68,0.15)',
+                tension: 0.35,
+                fill: true,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: chartLabelStyle, position: 'bottom' } },
+            scales: {
+                x: { grid: { display: false }, ticks: chartLabelStyle },
+                y: { grid: chartGrid, ticks: chartLabelStyle, beginAtZero: true },
+            }
+        }
+    });
+}
+
+const pieEl = document.getElementById('memberPieChart');
+if (pieEl && pieData.length) {
+    new Chart(pieEl.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: pieData.map(i => i.name),
+            datasets: [{
+                data: pieData.map(i => i.value),
+                backgroundColor: pieData.map(i => i.color),
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: chartLabelStyle, position: 'bottom' } },
+            cutout: '68%',
+            radius: '90%',
+        }
+    });
+}
+</script>
+{% endblock %}

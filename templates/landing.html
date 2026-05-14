@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack — Moliyaviy Boshqaruv</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            try {
+                const stored = localStorage.getItem('fintrack_theme');
+                if (stored === 'light') document.documentElement.setAttribute('data-theme', 'light');
+            } catch (e) {}
+        })();
+    </script>
+    <style>
+        :root {
+            --bg:#0a0f1e; --panel:#0f1629; --card:#131c30; --card2:#172035;
+            --border:#1e2d47; --border2:#243455;
+            --text:#e2e8f4; --sub:#7a8aaa; --dim:#4a5878;
+            --green:#22c55e; --green-bg:rgba(34,197,94,.10);
+            --blue:#3b82f6; --blue-bg:rgba(59,130,246,.10);
+            --red:#ef4444; --red-bg:rgba(239,68,68,.10);
+            --amber:#f59e0b; --amber-bg:rgba(245,158,11,.10);
+            --purple:#8b5cf6;
+            --shadow-soft: 0 12px 24px rgba(2, 6, 23, 0.35);
+            --shadow-strong: 0 32px 64px rgba(0, 0, 0, 0.5);
+            --topbar-bg: rgba(10,15,30,.9);
+            --lang-pill-bg: linear-gradient(135deg, rgba(255,255,255,.08), rgba(15,23,42,.7));
+            --lang-pill-border: rgba(122, 165, 255, 0.25);
+            --lang-pill-shadow: inset 0 0 20px rgba(59, 130, 246, 0.12), 0 10px 24px rgba(2, 6, 23, 0.35);
+            --lang-dot-bg: rgba(255, 255, 255, 0.06);
+            --lang-dot-border: rgba(255, 255, 255, 0.1);
+            --lang-dot-color: #cbd5f5;
+            --lang-dot-hover-border: rgba(122, 165, 255, 0.6);
+            --lang-dot-hover-color: #e2ebff;
+            --lang-dot-active-bg: #ffffff;
+            --lang-dot-active-color: #0a0e27;
+            --lang-dot-active-border: rgba(255, 255, 255, 0.9);
+            --lang-dot-active-shadow: 0 10px 18px rgba(2, 6, 23, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.35);
+        }
+        html[data-theme="light"] {
+            --bg:#f7f8fb; --panel:#ffffff; --card:#f2f4f8; --card2:#ffffff;
+            --border:#dbe2ee; --border2:#c9d4e6;
+            --text:#0f172a; --sub:#4b5563; --dim:#6b7280;
+            --green:#16a34a; --green-bg:rgba(22,163,74,.12);
+            --blue:#2563eb; --blue-bg:rgba(37,99,235,.12);
+            --red:#dc2626; --red-bg:rgba(220,38,38,.12);
+            --amber:#d97706; --amber-bg:rgba(217,119,6,.12);
+            --purple:#6366f1;
+            --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.08);
+            --shadow-strong: 0 28px 60px rgba(15, 23, 42, 0.16);
+            --topbar-bg: rgba(255,255,255,.9);
+            --lang-pill-bg: linear-gradient(135deg, rgba(15,23,42,0.04), rgba(148,163,184,0.22));
+            --lang-pill-border: rgba(37, 99, 235, 0.25);
+            --lang-pill-shadow: inset 0 0 14px rgba(37, 99, 235, 0.08), 0 8px 18px rgba(15, 23, 42, 0.08);
+            --lang-dot-bg: rgba(255, 255, 255, 0.92);
+            --lang-dot-border: rgba(15, 23, 42, 0.18);
+            --lang-dot-color: #0f172a;
+            --lang-dot-hover-border: rgba(37, 99, 235, 0.6);
+            --lang-dot-hover-color: #0f172a;
+            --lang-dot-active-bg: #2563eb;
+            --lang-dot-active-color: #ffffff;
+            --lang-dot-active-border: rgba(37, 99, 235, 0.4);
+            --lang-dot-active-shadow: 0 12px 20px rgba(37, 99, 235, 0.25), 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+        body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;}
+
+        /* TOPBAR */
+        .topbar{position:sticky;top:0;z-index:50;background:var(--topbar-bg);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px;}
+        .logo{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--text);text-decoration:none;letter-spacing:-.3px;}
+        .logo-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--purple));display:grid;place-items:center;}
+        .logo-mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;}
+        .logo-sub{color:var(--sub);font-weight:400;font-size:12px;margin-left:2px;}
+        .topbar-nav{display:flex;align-items:center;gap:4px;}
+        .nav-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;transition:all .18s;border:1px solid transparent;color:var(--sub);}
+        .nav-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;}
+        .nav-btn:hover{background:var(--card);color:var(--text);border-color:var(--border);}
+        .nav-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 0 20px rgba(59,130,246,.25);}
+        .nav-btn.primary:hover{background:#2563eb;box-shadow:0 0 28px rgba(59,130,246,.4);transform:translateY(-1px);}
+
+        /* HERO */
+        .hero{max-width:1200px;margin:0 auto;padding:80px 40px 60px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;}
+        .badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:100px;background:var(--blue-bg);border:1px solid rgba(59,130,246,.25);font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:24px;}
+        .badge-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);animation:blink 2s infinite;}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+        h1{font-size:clamp(1.9rem,4vw,2.9rem);font-weight:700;letter-spacing:-.8px;line-height:1.12;margin-bottom:18px;}
+        h1 em{font-style:normal;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+        .hero-sub{font-size:15px;color:var(--sub);line-height:1.7;margin-bottom:32px;max-width:440px;}
+        .hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px;}
+        .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:9px;font-size:13.5px;font-weight:600;text-decoration:none;transition:all .18s;border:1px solid transparent;font-family:inherit;}
+        .btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;flex-shrink:0;}
+        .btn.primary{background:var(--blue);color:#fff;box-shadow:0 4px 20px rgba(59,130,246,.3);}
+        .btn.primary:hover{background:#2563eb;transform:translateY(-1px);box-shadow:0 6px 28px rgba(59,130,246,.45);}
+        .btn.ghost{background:var(--card);color:var(--sub);border-color:var(--border);}
+        .btn.ghost:hover{color:var(--text);border-color:var(--border2);}
+
+        /* metrics strip */
+        .hero-metrics{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--card);}
+        .metric{flex:1;padding:14px 18px;border-right:1px solid var(--border);}
+        .metric:last-child{border-right:none;}
+        .metric-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:600;}
+        .metric-val{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-1px;}
+        .metric-val.g{color:var(--green);} .metric-val.b{color:var(--blue);} .metric-val.a{color:var(--amber);}
+
+        /* DASHBOARD PREVIEW */
+        .preview-wrap{position:relative;}
+        .preview{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-strong),0 0 0 1px rgba(255,255,255,.03);}
+
+        .pv-bar{background:var(--card);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;}
+        .pv-bar-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+        .pv-bar-title svg{width:14px;height:14px;fill:none;stroke:var(--blue);stroke-width:2;}
+        .pv-add{display:inline-flex;align-items:center;gap:5px;background:var(--blue);color:#fff;padding:5px 11px;border-radius:7px;font-size:11px;font-weight:600;}
+        .pv-add svg{width:10px;height:10px;fill:none;stroke:#fff;stroke-width:2.5;}
+
+        .pv-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px;}
+        .pv-stat{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:12px;}
+        .pv-stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:6px;}
+        .pv-stat-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;letter-spacing:-1px;}
+        .pv-stat-val.g{color:var(--green);} .pv-stat-val.r{color:var(--red);}
+        .pv-stat-sub{font-size:9px;color:var(--dim);margin-top:2px;}
+
+        .pv-chart{padding:0 14px 14px;}
+        .pv-chart-box{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:12px;}
+        .pv-chart-hdr{font-size:10px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:var(--sub);}
+        .pv-chart-hdr svg{width:13px;height:13px;fill:none;stroke:var(--blue);stroke-width:2;}
+        .pv-bars{display:flex;align-items:flex-end;gap:5px;height:44px;}
+        .pv-b{flex:1;border-radius:3px 3px 0 0;}
+
+        .pv-txs{padding:0 14px 14px;}
+        .pv-tx-hdr{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:8px;}
+        .pv-tx{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:var(--card2);border:1px solid var(--border);}
+        .pv-tx-l{display:flex;align-items:center;gap:9px;}
+        .pv-tx-icon{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex-shrink:0;}
+        .pv-tx-icon svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;}
+        .pv-tx-name{font-size:11px;font-weight:500;}
+        .pv-tx-cat{font-size:9px;color:var(--dim);}
+        .pv-tx-amt{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;}
+        .pv-tx-amt.pos{color:var(--green);} .pv-tx-amt.neg{color:var(--red);}
+
+        .float-notif{position:absolute;bottom:-14px;right:-14px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:11px;font-weight:500;box-shadow:var(--shadow-soft);display:flex;align-items:center;gap:8px;white-space:nowrap;animation:flt 4s ease-in-out infinite;}
+        @keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        .flt-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+
+        /* FEATURES */
+        .section{max-width:1200px;margin:0 auto;padding:60px 40px;}
+        .sec-tag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue);margin-bottom:10px;}
+        .sec-title{font-size:clamp(1.5rem,2.5vw,1.9rem);font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
+        .sec-sub{color:var(--sub);font-size:13.5px;margin-bottom:36px;}
+
+        .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+        .feat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;transition:border-color .2s,transform .2s;}
+        .feat-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+        .feat-icon{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;margin-bottom:14px;}
+        .feat-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;}
+        .feat-icon.blue{background:var(--blue-bg);color:var(--blue);}
+        .feat-icon.green{background:var(--green-bg);color:var(--green);}
+        .feat-icon.amber{background:var(--amber-bg);color:var(--amber);}
+        .feat-icon.purple{background:rgba(139,92,246,.12);color:var(--purple);}
+        .feat-icon.red{background:var(--red-bg);color:var(--red);}
+        .feat-icon.teal{background:rgba(20,184,166,.12);color:#14b8a6;}
+        .feat-title{font-size:13.5px;font-weight:600;margin-bottom:6px;}
+        .feat-desc{font-size:12.5px;color:var(--sub);line-height:1.55;}
+
+        /* REQUIREMENTS */
+        .req-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+        .req-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:border-color .2s,transform .2s;}
+        .req-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+        .req-title{font-size:13.5px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+        .req-flag{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--blue);background:var(--blue-bg);border:1px solid rgba(59,130,246,.25);padding:2px 6px;border-radius:999px;}
+        .req-list{display:grid;gap:6px;}
+        .req-item{font-size:12.5px;color:var(--sub);line-height:1.5;display:flex;gap:8px;align-items:flex-start;}
+        .req-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);margin-top:6px;flex-shrink:0;opacity:.8;}
+
+        /* USE CASES */
+        .use-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+        .use-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-size:12.5px;color:var(--sub);display:flex;gap:12px;align-items:flex-start;}
+        .use-num{width:32px;height:32px;border-radius:8px;background:var(--blue-bg);border:1px solid rgba(59,130,246,.3);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--blue);flex-shrink:0;}
+
+        /* STEPS */
+        .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+        .step{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;}
+        .step-num{width:34px;height:34px;border-radius:8px;background:var(--blue-bg);border:1px solid rgba(59,130,246,.3);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--blue);margin-bottom:14px;}
+        .step-title{font-size:13.5px;font-weight:600;margin-bottom:6px;}
+        .step-desc{font-size:12.5px;color:var(--sub);line-height:1.55;}
+
+        /* CTA */
+        .cta-wrap{max-width:1200px;margin:0 auto;padding:0 40px 80px;}
+        .cta-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:44px;display:flex;align-items:center;justify-content:space-between;gap:28px;position:relative;overflow:hidden;}
+        .cta-box::before{content:'';position:absolute;inset:0;background:radial-gradient(500px circle at 0% 50%,rgba(59,130,246,.06),transparent 60%);pointer-events:none;}
+        .cta-box::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,.4),transparent);}
+        .cta-text h2{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:7px;}
+        .cta-text p{color:var(--sub);font-size:13.5px;}
+        .cta-btns{display:flex;gap:10px;flex-shrink:0;}
+
+        footer{border-top:1px solid var(--border);max-width:1200px;margin:0 auto;padding:26px 40px;display:flex;align-items:center;justify-content:space-between;}
+        .footer-logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;}
+        .footer-logo svg{width:15px;height:15px;fill:none;stroke:var(--blue);stroke-width:2;}
+        .footer-copy{font-size:11px;color:var(--dim);}
+
+        @media(max-width:960px){
+            .hero{grid-template-columns:1fr;gap:40px;padding:48px 24px 40px;}
+            .feat-grid,.steps-grid{grid-template-columns:1fr 1fr;}
+            .req-grid,.use-grid{grid-template-columns:1fr;}
+            .steps-grid::before{display:none;}
+            .cta-box{flex-direction:column;align-items:flex-start;padding:28px;}
+            .topbar{padding:0 20px;}
+            .section{padding:48px 24px;}
+            .pv-stats{grid-template-columns:1fr 1fr;}
+        }
+
+        /* ── ANIMATIONS ── */
+
+        /* Hero entrance — staggered fade+slide */
+        .hero-left > * { opacity:0; transform:translateY(22px); }
+        .hero-left.ready > *:nth-child(1) { animation: fadeUp .55s .05s ease forwards; }
+        .hero-left.ready > *:nth-child(2) { animation: fadeUp .55s .15s ease forwards; }
+        .hero-left.ready > *:nth-child(3) { animation: fadeUp .55s .25s ease forwards; }
+        .hero-left.ready > *:nth-child(4) { animation: fadeUp .55s .35s ease forwards; }
+        .hero-left.ready > *:nth-child(5) { animation: fadeUp .55s .44s ease forwards; }
+        @keyframes fadeUp {
+            to { opacity:1; transform:translateY(0); }
+        }
+
+        /* Preview panel — slide in from right */
+        .preview-wrap { opacity:0; transform:translateX(32px); }
+        .preview-wrap.ready { animation: slideLeft .65s .2s cubic-bezier(.22,1,.36,1) forwards; }
+        @keyframes slideLeft { to { opacity:1; transform:translateX(0); } }
+
+        /* Bar chart — grow up from bottom */
+        .pv-b {
+            transform-origin: bottom;
+            transform: scaleY(0);
+            transition: transform .6s cubic-bezier(.34,1.56,.64,1);
+        }
+        .pv-b.grown { transform: scaleY(1); }
+
+        /* Stat cards — count up */
+        .pv-stat-val[data-target] { transition: color .3s; }
+
+        /* Floating notification — already has flt but add slide-in */
+        .float-notif { opacity:0; transform:translateY(10px) translateX(10px); }
+        .float-notif.ready { animation: notifIn .5s .9s ease forwards, flt 4s 1.5s ease-in-out infinite; }
+        @keyframes notifIn { to { opacity:1; transform:translateY(0) translateX(0); } }
+
+        /* Scroll reveal */
+        .reveal { opacity:0; transform:translateY(28px); transition: opacity .6s ease, transform .6s ease; }
+        .reveal.visible { opacity:1; transform:translateY(0); }
+        .reveal-delay-1 { transition-delay:.1s; }
+        .reveal-delay-2 { transition-delay:.2s; }
+        .reveal-delay-3 { transition-delay:.3s; }
+        .reveal-delay-4 { transition-delay:.4s; }
+        .reveal-delay-5 { transition-delay:.5s; }
+
+        /* Feature cards on hover — icon pulse */
+        .feat-card:hover .feat-icon { animation: iconPop .3s ease; }
+        @keyframes iconPop {
+            0%  { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100%{ transform: scale(1); }
+        }
+
+        /* Steps — line connector */
+        .steps-grid { position:relative; }
+        .steps-grid::before {
+            content:'';
+            position:absolute;
+            top:17px; left:calc(16.66% + 8px); right:calc(16.66% + 8px);
+            height:1px;
+            background:linear-gradient(90deg, var(--border), var(--border2), var(--border));
+            pointer-events:none;
+        }
+
+        /* Ticker — scrolling live updates */
+        .ticker-wrap {
+            overflow:hidden;
+            border-top:1px solid var(--border);
+            border-bottom:1px solid var(--border);
+            background:var(--panel);
+            padding:10px 0;
+            margin-bottom:0;
+        }
+        .ticker {
+            display:flex; gap:48px;
+            width:max-content;
+            animation: tickerScroll 28s linear infinite;
+        }
+        .ticker:hover { animation-play-state:paused; }
+        @keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        .ticker-item {
+            display:inline-flex; align-items:center; gap:8px;
+            font-size:11px; font-weight:500; color:var(--sub);
+            white-space:nowrap;
+        }
+        .ticker-item .t-val { font-family:'JetBrains Mono',monospace; font-weight:600; }
+        .ticker-item .t-val.up { color:var(--green); }
+        .ticker-item .t-val.dn { color:var(--red); }
+        .ticker-sep { color:var(--border2); }
+
+        /* CTA glow pulse */
+        .cta-box { transition: box-shadow .3s; }
+        .cta-box:hover { box-shadow: 0 0 60px rgba(59,130,246,.08); }
+
+        /* Live dot on preview */
+        .pv-live { display:flex; align-items:center; gap:5px; font-size:9px; color:var(--green); font-weight:600; }
+        .pv-live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 2s infinite; }
+
+        /* Topbar scroll shrink */
+        .topbar { transition: height .25s, background .25s; }
+        .topbar.scrolled { height:52px; background:rgba(10,15,30,.97); }
+
+        /* Scan line on preview (subtle) */
+        .preview { position:relative; }
+        .preview::after {
+            content:'';
+            position:absolute; left:0; right:0; top:0;
+            height:2px;
+            background:linear-gradient(90deg,transparent,rgba(59,130,246,.5),transparent);
+            animation: scanLine 3s ease-in-out infinite;
+            pointer-events:none;
+        }
+        @keyframes scanLine {
+            0%   { top:0;    opacity:0; }
+            10%  { opacity:1; }
+            90%  { opacity:1; }
+            100% { top:100%; opacity:0; }
+        }
+    
+        .lang-switch{display:inline-flex;align-items:center;margin-left:6px;}
+        .lang-flags{display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--lang-pill-bg);border:1px solid var(--lang-pill-border);box-shadow:var(--lang-pill-shadow);}
+        .lang-flag-dot{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--lang-dot-bg);border:1px solid var(--lang-dot-border);color:var(--lang-dot-color);cursor:pointer;transition:all .18s;font-weight:800;letter-spacing:.6px;text-transform:uppercase;}
+        .lang-flag-dot:hover{border-color:var(--lang-dot-hover-border);color:var(--lang-dot-hover-color);}
+        .lang-flag-dot.active{background:var(--lang-dot-active-bg);color:var(--lang-dot-active-color);border-color:var(--lang-dot-active-border);box-shadow:var(--lang-dot-active-shadow);}
+        .theme-toggle{width:36px;height:36px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s ease;margin-left:8px;}
+        .theme-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;}
+        .theme-toggle:hover{border-color:var(--border2);box-shadow:0 8px 18px rgba(59,130,246,.18);}
+        .lang-flag-emoji{font-size:12px;line-height:1;}
+
+    
+        .scroll-top-btn{position:fixed;right:20px;bottom:20px;width:48px;height:48px;border-radius:50%;border:1px solid rgba(100,209,255,.45);background:rgba(10,14,39,.55);color:#8fd3ff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(100,209,255,.15),0 0 18px rgba(59,130,246,.35),0 0 36px rgba(59,130,246,.2);cursor:pointer;opacity:0;pointer-events:none;transform:translateY(8px);transition:.2s;z-index:60;font-size:18px;text-shadow:0 0 6px rgba(143,211,255,.8),0 0 14px rgba(59,130,246,.6),0 0 24px rgba(59,130,246,.4);}
+        .scroll-top-btn.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+        .scroll-top-btn:hover{background:rgba(10,14,39,.75);box-shadow:0 0 0 1px rgba(100,209,255,.3),0 0 26px rgba(59,130,246,.55),0 0 60px rgba(59,130,246,.4);}
+
+        /* ── TABLET ── */
+        @media(max-width:960px){
+            .hero{grid-template-columns:1fr;gap:36px;padding:48px 24px 40px;}
+            .feat-grid,.steps-grid{grid-template-columns:1fr 1fr;}
+            .req-grid,.use-grid{grid-template-columns:1fr;}
+            .steps-grid::before{display:none;}
+            .cta-box{flex-direction:column;align-items:flex-start;padding:28px;}
+            .topbar{padding:0 20px;}
+            .section{padding:48px 24px;}
+            .pv-stats{grid-template-columns:1fr 1fr;}
+        }
+
+        /* ── MOBILE ── */
+        @media(max-width:600px){
+            /* Topbar */
+            .topbar{padding:0 14px;height:52px;gap:8px;}
+            .logo{font-size:14px;}
+            .logo-mark{width:28px;height:28px;}
+            .topbar-nav{gap:2px;}
+            .nav-btn{padding:6px 10px;font-size:12px;}
+            .nav-btn span{display:none;}
+            .nav-btn svg{display:block;}
+            /* show only icons on mobile for features link */
+            .nav-btn:first-child{display:none;}
+
+            /* Hero */
+            .hero{padding:28px 16px 24px;gap:24px;}
+            h1{font-size:1.7rem;letter-spacing:-.5px;}
+            .hero-sub{font-size:13.5px;margin-bottom:24px;}
+            .hero-cta{gap:8px;}
+            .hero-cta .btn{padding:10px 16px;font-size:13px;}
+            .hero-metrics{border-radius:8px;}
+            .metric{padding:10px 12px;}
+            .metric-val{font-size:15px;}
+            .metric-label{font-size:9px;}
+
+            /* Preview — hide on very small, show simplified */
+            .preview-wrap .float-notif{display:none;}
+            .pv-stats{grid-template-columns:1fr 1fr;gap:6px;padding:10px;}
+            .pv-stat{padding:9px;}
+            .pv-stat-val{font-size:13px;}
+            .pv-bars{height:36px;}
+
+            /* Ticker */
+            .ticker-wrap{padding:8px 0;}
+            .ticker-item{font-size:10px;}
+
+            /* Sections */
+            .section{padding:32px 16px;}
+            .sec-title{font-size:1.3rem;}
+            .sec-sub{font-size:13px;margin-bottom:24px;}
+            .feat-grid{grid-template-columns:1fr;gap:10px;}
+            .feat-card{padding:16px;}
+            .steps-grid{grid-template-columns:1fr;gap:10px;}
+            .step{padding:16px;}
+
+            /* CTA */
+            .cta-wrap{padding:0 16px 48px;}
+            .cta-box{padding:22px 18px;}
+            .cta-text h2{font-size:16px;}
+            .cta-btns{flex-direction:column;width:100%;}
+            .cta-btns .btn{width:100%;justify-content:center;}
+
+            /* Footer */
+            footer{padding:18px 16px;flex-direction:column;gap:8px;text-align:center;}
+
+            /* Lang switch compact */
+            .lang-flag-dot{width:30px;height:30px;font-size:10px;}
+            .lang-flags{gap:4px;padding:4px;}
+        }
+
+        @media(max-width:380px){
+            .hero{padding:20px 12px 18px;}
+            h1{font-size:1.45rem;}
+            .hero-cta{flex-direction:column;}
+            .hero-cta .btn{width:100%;justify-content:center;}
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <a href="#" class="logo">
+        <div class="logo-mark">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        FinTrack
+        <span class="logo-sub" data-i18n="logo-sub">/ Moliyaviy Boshqaruv</span>
+    </a>
+    <nav class="topbar-nav">
+        <a href="#features" class="nav-btn">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <span data-i18n="nav-features">Imkoniyatlar</span>
+        </a>
+        <a href="{% url 'login' %}" class="nav-btn">
+            <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+            <span data-i18n="nav-login">Kirish</span>
+        </a>
+        <a href="{% url 'register' %}" class="nav-btn primary">
+            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            <span data-i18n="nav-start">Boshlash</span>
+        </a>
+        <button type="button" class="theme-toggle" id="themeToggle" aria-label="Tungi rejim" title="Tungi rejim">
+            <svg viewBox="0 0 24 24"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5Z"/></svg>
+        </button>
+        {% include 'partials/language_switcher.html' %}
+    </nav>
+</header>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+    <div class="ticker">
+        <span class="ticker-item"><span class="t-val up">↑ +5,200,000</span>&nbsp;<span data-i18n="income">Daromad</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="balance">Balans</span>&nbsp;<span class="t-val">12,480,000 UZS</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span class="t-val dn">↓ −320,000</span>&nbsp;Grocery <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="budget">Byudjet</span>&nbsp;<span class="t-val up">76%</span>&nbsp;<span data-i18n="used">ishlatildi</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="savings">Jamg'arma</span>&nbsp;<span class="t-val up">+1,000,000</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span class="t-val">USD/UZS</span>&nbsp;—&nbsp;12,650 <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="debt-deadline">Qarz muddati</span>&nbsp;<span class="t-val dn"><span data-i18n="days-left">3 kun qoldi</span></span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="transport">Transport</span>&nbsp;<span class="t-val dn">↓ −85,000</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span class="t-val up">↑ +5,200,000</span>&nbsp;<span data-i18n="income">Daromad</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="balance">Balans</span>&nbsp;<span class="t-val">12,480,000 UZS</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span class="t-val dn">↓ −320,000</span>&nbsp;Grocery <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="budget">Byudjet</span>&nbsp;<span class="t-val up">76%</span>&nbsp;<span data-i18n="used">ishlatildi</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="savings">Jamg'arma</span>&nbsp;<span class="t-val up">+1,000,000</span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span class="t-val">USD/UZS</span>&nbsp;—&nbsp;12,650 <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="debt-deadline">Qarz muddati</span>&nbsp;<span class="t-val dn"><span data-i18n="days-left">3 kun qoldi</span></span> <span class="ticker-sep">·</span></span>
+        <span class="ticker-item"><span data-i18n="transport">Transport</span>&nbsp;<span class="t-val dn">↓ −85,000</span> <span class="ticker-sep">·</span></span>
+    </div>
+</div>
+
+<main>
+<div class="hero">
+    <div class="hero-left">
+        <div class="badge"><div class="badge-dot"></div> <span data-i18n="badge">Hozir mavjud — bepul</span></div>
+        <h1><span data-i18n="hero-title">Barcha moliyangizni<br><em>bir panelda</em><br>boshqaring</span></h1>
+        <p class="hero-sub" data-i18n="hero-sub">Daromad, xarajat, balans, qarz/haqdorlik, byudjet va transferlarni real vaqtda kuzating. Account va kartalarning holati bitta panelda.</p>
+        <div class="hero-cta">
+            <a href="{% url 'register' %}" class="btn primary">
+                <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <span data-i18n="btn-free-start">Bepul boshlash</span>
+            </a>
+            <a href="{% url 'login' %}" class="btn ghost">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <span data-i18n="btn-demo">Hoziroq boshlash</span>
+            </a>
+        </div>
+        <div class="hero-metrics">
+            <div class="metric"><div class="metric-label" data-i18n="balance">Balans</div><div class="metric-val b" data-target="12480000" data-prefix="" data-suffix="M">12.4M</div></div>
+            <div class="metric"><div class="metric-label" data-i18n="income">Daromad</div><div class="metric-val g" data-target="5200000" data-prefix="+" data-suffix="M">+5.2M</div></div>
+            <div class="metric"><div class="metric-label" data-i18n="expense">Xarajat</div><div class="metric-val a" data-target="2800000" data-prefix="-" data-suffix="M">-2.8M</div></div>
+        </div>
+    </div>
+
+    <div class="preview-wrap">
+        <div class="preview">
+            <div class="pv-bar">
+                <div class="pv-bar-title">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                    Dashboard
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="pv-live"><div class="pv-live-dot"></div> LIVE</div>
+                    <div class="pv-add">
+                        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span data-i18n="new-tx">Yangi tranzaksiya</span>
+                    </div>
+                </div>
+            </div>
+            <div class="pv-stats">
+                <div class="pv-stat"><div class="pv-stat-label" data-i18n="total-balance">Umumiy balans</div><div class="pv-stat-val">12,480,000</div><div class="pv-stat-sub">UZS</div></div>
+                <div class="pv-stat"><div class="pv-stat-label" data-i18n="month-income">Bu oy daromad</div><div class="pv-stat-val g">+5,200,000</div><div class="pv-stat-sub">UZS</div></div>
+                <div class="pv-stat"><div class="pv-stat-label" data-i18n="month-expense">Bu oy xarajat</div><div class="pv-stat-val r">-2,840,000</div><div class="pv-stat-sub">UZS</div></div>
+                <div class="pv-stat"><div class="pv-stat-label" data-i18n="net-balance">Sof qoldiq</div><div class="pv-stat-val g">+2,360,000</div><div class="pv-stat-sub">Mart 2026</div></div>
+            </div>
+            <div class="pv-chart">
+                <div class="pv-chart-box">
+                    <div class="pv-chart-hdr">
+                        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span data-i18n="trend-7d">Oxirgi 7 kunlik trend</span>
+                    </div>
+                    <div class="pv-bars">
+                        <div class="pv-b" data-h="40" style="background:var(--blue);opacity:.6;"></div>
+                        <div class="pv-b" data-h="65" style="background:var(--green);opacity:.7;"></div>
+                        <div class="pv-b" data-h="45" style="background:var(--blue);opacity:.55;"></div>
+                        <div class="pv-b" data-h="80" style="background:var(--green);opacity:.8;"></div>
+                        <div class="pv-b" data-h="52" style="background:var(--blue);opacity:.6;"></div>
+                        <div class="pv-b" data-h="90" style="background:var(--green);"></div>
+                        <div class="pv-b" data-h="68" style="background:var(--blue);opacity:.7;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="pv-txs">
+                <div class="pv-tx-hdr" data-i18n="recent-tx">So'nggi tranzaksiyalar</div>
+                <div class="pv-tx">
+                    <div class="pv-tx-l">
+                        <div class="pv-tx-icon" style="background:var(--green-bg);color:var(--green);">
+                            <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/></svg>
+                        </div>
+                        <div><div class="pv-tx-name" data-i18n="salary">Ish haqi</div><div class="pv-tx-cat" data-i18n="income">Daromad</div></div>
+                    </div>
+                    <div class="pv-tx-amt pos">+5,200,000</div>
+                </div>
+                <div class="pv-tx">
+                    <div class="pv-tx-l">
+                        <div class="pv-tx-icon" style="background:var(--amber-bg);color:var(--amber);">
+                            <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        </div>
+                        <div><div class="pv-tx-name">Grocery</div><div class="pv-tx-cat" data-i18n="food">Oziq-ovqat</div></div>
+                    </div>
+                    <div class="pv-tx-amt neg">-320,000</div>
+                </div>
+                <div class="pv-tx">
+                    <div class="pv-tx-l">
+                        <div class="pv-tx-icon" style="background:var(--blue-bg);color:var(--blue);">
+                            <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        </div>
+                        <div><div class="pv-tx-name" data-i18n="transfer">Transfer</div><div class="pv-tx-cat" data-i18n="savings">Jamg'arma</div></div>
+                    </div>
+                    <div class="pv-tx-amt neg">-1,000,000</div>
+                </div>
+            </div>
+        </div>
+        <div class="float-notif"><div class="flt-dot"></div> <span data-i18n="balance-updated">Balans yangilandi — +2,360,000</span></div>
+    </div>
+</div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+    <div class="reveal">
+    <div class="sec-tag" data-i18n="sec-features">Imkoniyatlar</div>
+    <div class="sec-title" data-i18n="sec-features-title">Bank tizimi darajasidagi vositalar</div>
+    <div class="sec-sub" data-i18n="sec-features-sub">Shaxsiy moliyangizni professional darajada boshqaring</div>
+    </div>
+    <div class="feat-grid">
+        <div class="feat-card reveal reveal-delay-1">
+            <div class="feat-icon blue"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <div class="feat-title" data-i18n="feat1-title">Hisoblar va kartalar</div>
+            <div class="feat-desc" data-i18n="feat1-desc">Nomi, turi, valyuta va boshlang'ich balans bilan account/kartalarni boshqaring.</div>
+        </div>
+        <div class="feat-card reveal reveal-delay-2">
+            <div class="feat-icon green"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="feat-title" data-i18n="feat2-title">Daromad va xarajatlar</div>
+            <div class="feat-desc" data-i18n="feat2-desc">Tranzaksiya qo'shish, tahrirlash va o'chirish; balanslar avtomatik yangilanadi.</div>
+        </div>
+        <div class="feat-card reveal reveal-delay-3">
+            <div class="feat-icon amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="feat-title" data-i18n="feat3-title">Byudjet va rejalashtirish</div>
+            <div class="feat-desc" data-i18n="feat3-desc">Oylik daromad byudjeti, kategoriya limitlari va reja vs real solishtirish.</div>
+        </div>
+        <div class="feat-card reveal reveal-delay-1">
+            <div class="feat-icon purple"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+            <div class="feat-title" data-i18n="feat4-title">Transfer va konvertatsiya</div>
+            <div class="feat-desc" data-i18n="feat4-desc">Hisoblar orasida o'tkazma: biri kamayib, biri oshadi, FX kursi bilan.</div>
+        </div>
+        <div class="feat-card reveal reveal-delay-2">
+            <div class="feat-icon red"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="feat-title" data-i18n="feat5-title">Qarz boshqaruvi</div>
+            <div class="feat-desc" data-i18n="feat5-desc">Berilgan va olingan qarzlar, muddatlar bo'yicha eslatmalar.</div>
+        </div>
+        <div class="feat-card reveal reveal-delay-3">
+            <div class="feat-icon teal"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+            <div class="feat-title" data-i18n="feat6-title">AI tavsiyalar</div>
+            <div class="feat-desc" data-i18n="feat6-desc">Tranzaksiya tarixiga asoslanib aqlli kategoriya taklifi va tejash maslahatlari.</div>
+        </div>
+    </div>
+</section>
+
+<!-- STEPS -->
+<section class="section">
+    <div class="reveal">
+    <div class="sec-tag" data-i18n="sec-start">Boshlash</div>
+    <div class="sec-title" data-i18n="sec-steps-title">3 qadam — to'liq nazorat</div>
+    <div class="sec-sub" data-i18n="sec-steps-sub">Ro'yxatdan birinchi byudjetgacha atigi 2 daqiqa</div>
+    </div>
+    <div class="steps-grid">
+        <div class="step reveal reveal-delay-1"><div class="step-num">01</div><div class="step-title" data-i18n="step1-title">Ro'yxatdan o'ting</div><div class="step-desc" data-i18n="step1-desc">Bepul hisob yarating. Kredit karta talab qilinmaydi.</div></div>
+        <div class="step reveal reveal-delay-2"><div class="step-num">02</div><div class="step-title" data-i18n="step2-title">Hisoblaringizni qo'shing</div><div class="step-desc" data-i18n="step2-desc">Naqd pul, bank karta, jamg'arma — barchasini birlashtiring.</div></div>
+        <div class="step reveal reveal-delay-3"><div class="step-num">03</div><div class="step-title" data-i18n="step3-title">Nazorat qiling</div><div class="step-desc" data-i18n="step3-desc">Xarajatlarni kiriting, byudjet sozlang, statistikani kuzating.</div></div>
+    </div>
+</section>
+</main>
+
+<div class="cta-wrap">
+    <div class="cta-box reveal">
+        <div class="cta-text">
+            <h2 data-i18n="cta-title">Moliyaviy intizomni bugundan boshlang</h2>
+            <p data-i18n="cta-sub">Ro'yxatdan o'ting va birinchi byudjetingizni 2 daqiqada sozlang. Bepul va xavfsiz.</p>
+        </div>
+        <div class="cta-btns">
+            <a href="{% url 'register' %}" class="btn primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                <span data-i18n="btn-register">Ro'yxatdan o'tish</span>
+            </a>
+            <a href="{% url 'login' %}" class="btn ghost">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                <span data-i18n="nav-login">Kirish</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-logo">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        FinTrack
+    </div>
+    <div class="footer-copy" data-i18n="footer-copy">© 2026 FinTrack — Shaxsiy moliyaviy boshqaruv platformasi</div>
+</footer>
+
+    <button class="scroll-top-btn" id="scrollTopBtn" aria-label="Tepaga">&#8593;</button>
+
+<script>
+// ── TRANSLATIONS ──
+const LANG = '{{ request.LANGUAGE_CODE|default:"uz" }}';
+const T = {
+  uz: {
+    'logo-sub': '/ Moliyaviy Boshqaruv',
+    'nav-features': 'Imkoniyatlar',
+    'nav-login': 'Kirish',
+    'nav-start': 'Boshlash',
+    'btn-register': "Ro'yxatdan o'tish",
+    'btn-free-start': 'Bepul boshlash',
+    'btn-demo': 'Demo kirish',
+    'badge': 'Hozir mavjud — bepul',
+    'hero-title': "Barcha moliyangizni bir panelda boshqaring",
+    'hero-sub': "Daromad, xarajat, balans, qarz/haqdorlik, byudjet va transferlarni real vaqtda kuzating. Account va kartalarning holati bitta panelda.",
+    'balance': 'Balans', 'income': 'Daromad', 'expense': 'Xarajat',
+    'new-tx': 'Yangi tranzaksiya', 'total-balance': 'Umumiy balans',
+    'month-income': 'Bu oy daromad', 'month-expense': 'Bu oy xarajat',
+    'net-balance': 'Sof qoldiq', 'trend-7d': 'Oxirgi 7 kunlik trend',
+    'recent-tx': "So'nggi tranzaksiyalar", 'salary': 'Ish haqi',
+    'food': 'Oziq-ovqat', 'transfer': 'Transfer', 'savings': "Jamg'arma",
+    'balance-updated': 'Balans yangilandi — +2,360,000',
+    'budget': 'Byudjet', 'used': 'ishlatildi', 'debt-deadline': 'Qarz muddati',
+    'days-left': '3 kun qoldi', 'transport': 'Transport',
+    'sec-features': 'Imkoniyatlar', 'sec-features-title': 'Bank tizimi darajasidagi vositalar',
+    'sec-features-sub': 'Shaxsiy moliyangizni professional darajada boshqaring',
+    'feat1-title': 'Hisoblar va kartalar', 'feat1-desc': "Nomi, turi, valyuta va boshlang'ich balans bilan account/kartalarni boshqaring.",
+    'feat2-title': 'Daromad va xarajatlar', "feat2-desc": "Tranzaksiya qo'shish, tahrirlash va o'chirish; balanslar avtomatik yangilanadi.",
+    'feat3-title': 'Byudjet va rejalashtirish', 'feat3-desc': "Oylik daromad byudjeti, kategoriya limitlari va reja vs real solishtirish.",
+    'feat4-title': 'Transfer va konvertatsiya', 'feat4-desc': "Hisoblar orasida o'tkazma: biri kamayib, biri oshadi, FX kursi bilan.",
+    'feat5-title': 'Qarz boshqaruvi', 'feat5-desc': "Berilgan va olingan qarzlar, muddatlar bo'yicha eslatmalar.",
+    'feat6-title': 'AI tavsiyalar', 'feat6-desc': "Tranzaksiya tarixiga asoslanib aqlli kategoriya taklifi va tejash maslahatlari.",
+    'sec-start': 'Boshlash', 'sec-steps-title': "3 qadam — to'liq nazorat",
+    'sec-steps-sub': "Ro'yxatdan birinchi byudjetgacha atigi 2 daqiqa",
+    'step1-title': "Ro'yxatdan o'ting", 'step1-desc': "Bepul hisob yarating. Kredit karta talab qilinmaydi.",
+    'step2-title': "Hisoblaringizni qo'shing", 'step2-desc': "Naqd pul, bank karta, jamg'arma — barchasini birlashtiring.",
+    'step3-title': 'Nazorat qiling', 'step3-desc': "Xarajatlarni kiriting, byudjet sozlang, statistikani kuzating.",
+    'cta-title': 'Moliyaviy intizomni bugundan boshlang',
+    'cta-sub': "Ro'yxatdan o'ting va birinchi byudjetingizni 2 daqiqada sozlang. Bepul va xavfsiz.",
+    'footer-copy': '© 2026 FinTrack — Shaxsiy moliyaviy boshqaruv platformasi',
+  },
+  ru: {
+    'logo-sub': '/ Финансовое управление',
+    'nav-features': 'Возможности',
+    'nav-login': 'Войти',
+    'nav-start': 'Начать',
+    'btn-register': 'Регистрация',
+    'btn-free-start': 'Начать бесплатно',
+    'btn-demo': 'Демо вход',
+    'badge': 'Доступно сейчас — бесплатно',
+    'hero-title': 'Управляйте всеми финансами в одной панели',
+    'hero-sub': 'Доходы, расходы, баланс, долги, бюджет и переводы в реальном времени. Состояние всех счетов и карт в одной панели.',
+    'balance': 'Баланс', 'income': 'Доход', 'expense': 'Расход',
+    'new-tx': 'Новая транзакция', 'total-balance': 'Общий баланс',
+    'month-income': 'Доход за месяц', 'month-expense': 'Расход за месяц',
+    'net-balance': 'Чистый остаток', 'trend-7d': 'Тренд за последние 7 дней',
+    'recent-tx': 'Последние транзакции', 'salary': 'Зарплата',
+    'food': 'Продукты', 'transfer': 'Перевод', 'savings': 'Сбережения',
+    'balance-updated': 'Баланс обновлён — +2,360,000',
+    'budget': 'Бюджет', 'used': 'использовано', 'debt-deadline': 'Срок долга',
+    'days-left': 'осталось 3 дня', 'transport': 'Транспорт',
+    'sec-features': 'Возможности', 'sec-features-title': 'Инструменты банковского уровня',
+    'sec-features-sub': 'Управляйте личными финансами на профессиональном уровне',
+    'feat1-title': 'Счета и карты', 'feat1-desc': 'Управляйте счетами с названием, типом, валютой и начальным балансом.',
+    'feat2-title': 'Доходы и расходы', 'feat2-desc': 'Добавляйте, редактируйте и удаляйте транзакции; балансы обновляются автоматически.',
+    'feat3-title': 'Бюджет и планирование', 'feat3-desc': 'Месячный бюджет, лимиты по категориям и сравнение план/факт.',
+    'feat4-title': 'Переводы и конвертация', 'feat4-desc': 'Переводы между счетами с курсом обмена валют.',
+    'feat5-title': 'Управление долгами', 'feat5-desc': 'Выданные и полученные долги, напоминания по срокам.',
+    'feat6-title': 'AI советы', 'feat6-desc': 'Умные предложения категорий и советы по экономии на основе истории.',
+    'sec-start': 'Начало', 'sec-steps-title': '3 шага — полный контроль',
+    'sec-steps-sub': 'От регистрации до первого бюджета всего 2 минуты',
+    'step1-title': 'Зарегистрируйтесь', 'step1-desc': 'Создайте бесплатный аккаунт. Карта не требуется.',
+    'step2-title': 'Добавьте счета', 'step2-desc': 'Наличные, банковские карты, сбережения — объедините всё.',
+    'step3-title': 'Контролируйте', 'step3-desc': 'Вводите расходы, настройте бюджет, следите за статистикой.',
+    'cta-title': 'Начните финансовую дисциплину сегодня',
+    'cta-sub': 'Зарегистрируйтесь и настройте первый бюджет за 2 минуты. Бесплатно и безопасно.',
+    'footer-copy': '© 2026 FinTrack — Платформа личного финансового управления',
+  },
+  en: {
+    'logo-sub': '/ Financial Management',
+    'nav-features': 'Features',
+    'nav-login': 'Login',
+    'nav-start': 'Get Started',
+    'btn-register': 'Register',
+    'btn-free-start': 'Start Free',
+    'btn-demo': 'Demo Login',
+    'badge': 'Available now — free',
+    'hero-title': 'Manage all your finances in one dashboard',
+    'hero-sub': 'Track income, expenses, balance, debts, budget and transfers in real time. All your accounts and cards in one place.',
+    'balance': 'Balance', 'income': 'Income', 'expense': 'Expense',
+    'new-tx': 'New Transaction', 'total-balance': 'Total Balance',
+    'month-income': 'Monthly Income', 'month-expense': 'Monthly Expense',
+    'net-balance': 'Net Balance', 'trend-7d': 'Last 7 days trend',
+    'recent-tx': 'Recent Transactions', 'salary': 'Salary',
+    'food': 'Groceries', 'transfer': 'Transfer', 'savings': 'Savings',
+    'balance-updated': 'Balance updated — +2,360,000',
+    'budget': 'Budget', 'used': 'used', 'debt-deadline': 'Debt deadline',
+    'days-left': '3 days left', 'transport': 'Transport',
+    'sec-features': 'Features', 'sec-features-title': 'Bank-level tools',
+    'sec-features-sub': 'Manage your personal finances at a professional level',
+    'feat1-title': 'Accounts & Cards', 'feat1-desc': 'Manage accounts with name, type, currency and starting balance.',
+    'feat2-title': 'Income & Expenses', 'feat2-desc': 'Add, edit and delete transactions; balances update automatically.',
+    'feat3-title': 'Budget & Planning', 'feat3-desc': 'Monthly budget, category limits and plan vs actual comparison.',
+    'feat4-title': 'Transfers & Conversion', 'feat4-desc': 'Transfers between accounts with FX rate support.',
+    'feat5-title': 'Debt Management', 'feat5-desc': 'Lent and borrowed debts with deadline reminders.',
+    'feat6-title': 'AI Recommendations', 'feat6-desc': 'Smart category suggestions and saving tips based on history.',
+    'sec-start': 'Get Started', 'sec-steps-title': '3 steps — full control',
+    'sec-steps-sub': 'From registration to first budget in just 2 minutes',
+    'step1-title': 'Register', 'step1-desc': 'Create a free account. No credit card required.',
+    'step2-title': 'Add your accounts', 'step2-desc': 'Cash, bank cards, savings — bring everything together.',
+    'step3-title': 'Take control', 'step3-desc': 'Enter expenses, set a budget, track your statistics.',
+    'cta-title': 'Start financial discipline today',
+    'cta-sub': 'Register and set up your first budget in 2 minutes. Free and secure.',
+    'footer-copy': '© 2026 FinTrack — Personal Financial Management Platform',
+  }
+};
+
+function applyTranslations(lang) {
+  const dict = T[lang] || T['uz'];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.textContent = dict[key];
+  });
+  document.documentElement.lang = lang;
+}
+
+function initLangSwitch(root = document) {
+  root.querySelectorAll('.lang-switch').forEach((form) => {
+    if (form.dataset.langBound) return;
+    form.dataset.langBound = '1';
+
+    const input = form.querySelector('input[name="language"]');
+    const labelEl = form.querySelector('[data-lang-label]');
+    const flagEl = form.querySelector('[data-lang-flag]');
+    const cycleBtn = form.querySelector('[data-lang-cycle]');
+    const dots = Array.from(form.querySelectorAll('.lang-flag-dot'));
+    const order = (form.dataset.langOrder || 'uz,ru,en')
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+
+    const map = {};
+    dots.forEach(dot => {
+      const key = (dot.dataset.lang || '').toLowerCase();
+      if (!key) return;
+      map[key] = {
+        label: dot.dataset.label || key.toUpperCase(),
+        flag: dot.dataset.flag || dot.textContent.trim(),
+      };
+    });
+
+    const submitForm = () => {
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
+    };
+
+    const applyLang = (lang, submit) => {
+      const resolved = map[lang] ? lang : (order[0] || 'uz');
+      if (input) {
+        input.value = resolved;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (labelEl && map[resolved]) labelEl.textContent = map[resolved].label;
+      if (flagEl && map[resolved]) flagEl.textContent = map[resolved].flag;
+      dots.forEach(dot => dot.classList.toggle('active', dot.dataset.lang === resolved));
+      if (submit) submitForm();
+    };
+
+    const current = (input && input.value) || order[0] || 'uz';
+    applyLang(current, false);
+
+    if (cycleBtn) {
+      cycleBtn.addEventListener('click', () => {
+        const cur = (input && input.value) || current;
+        let idx = order.indexOf(cur);
+        if (idx < 0) idx = 0;
+        const next = order[(idx + 1) % order.length];
+        applyLang(next, true);
+      });
+    }
+
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const lang = (dot.dataset.lang || '').toLowerCase();
+        if (!lang) return;
+        applyLang(lang, true);
+      });
+    });
+  });
+}
+
+initLangSwitch();
+applyTranslations(LANG);
+
+// Also re-apply when language switcher changes
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.name === 'language') {
+    applyTranslations(e.target.value);
+  }
+});
+
+(function initTheme() {
+  const THEME_KEY = 'fintrack_theme';
+  const toggle = document.getElementById('themeToggle');
+  if (!toggle) return;
+
+  const sunIcon = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+  const moonIcon = '<svg viewBox="0 0 24 24"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5Z"/></svg>';
+
+  function applyTheme(theme) {
+    const resolved = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', resolved);
+    toggle.innerHTML = resolved === 'light' ? moonIcon : sunIcon;
+    toggle.setAttribute('aria-label', resolved === 'light' ? 'Tungi rejim' : 'Kunduzgi rejim');
+    toggle.setAttribute('title', resolved === 'light' ? 'Tungi rejim' : 'Kunduzgi rejim');
+  }
+
+  const stored = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(stored || (prefersDark ? 'dark' : 'light'));
+
+  toggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  });
+})();
+</script>
+
+<script>
+(function() {
+
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+    function toggleScrollTopBtn() {
+        if (!scrollTopBtn) return;
+        scrollTopBtn.classList.toggle('show', window.scrollY > 320);
+    }
+    if (scrollTopBtn) {
+        scrollTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }));
+        window.addEventListener('scroll', toggleScrollTopBtn, { passive: true });
+        toggleScrollTopBtn();
+    }
+
+    // ── 1. TOPBAR SCROLL SHRINK ──
+    const topbar = document.querySelector('.topbar');
+    window.addEventListener('scroll', () => {
+        topbar.classList.toggle('scrolled', window.scrollY > 40);
+    }, { passive: true });
+
+    // ── 2. HERO ENTRANCE ──
+    const heroLeft = document.querySelector('.hero-left');
+    const previewWrap = document.querySelector('.preview-wrap');
+    const floatNotif = document.querySelector('.float-notif');
+
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            if (heroLeft)    heroLeft.classList.add('ready');
+            if (previewWrap) previewWrap.classList.add('ready');
+            if (floatNotif)  floatNotif.classList.add('ready');
+        }, 80);
+    });
+
+    // ── 3. BAR CHART GROW ──
+    const bars = document.querySelectorAll('.pv-b[data-h]');
+    function growBars() {
+        bars.forEach((bar, i) => {
+            const h = bar.dataset.h;
+            bar.style.height = h + '%';
+            setTimeout(() => bar.classList.add('grown'), 400 + i * 80);
+        });
+    }
+    // trigger after preview slides in
+    setTimeout(growBars, 700);
+
+    // ── 4. COUNTER ANIMATION ──
+    function animateCounter(el, end, duration, prefix, suffix) {
+        const start = 0;
+        const startTime = performance.now();
+        const isFloat = String(end).includes('.');
+
+        function update(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            const val = start + (end - start) * ease;
+
+            let display;
+            if (end >= 1000000) display = (val / 1000000).toFixed(1) + 'M';
+            else if (end >= 1000) display = (val / 1000).toFixed(0) + 'K';
+            else display = Math.floor(val).toString();
+
+            el.textContent = prefix + display;
+            if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+    }
+
+    setTimeout(() => {
+        document.querySelectorAll('.metric-val[data-target]').forEach(el => {
+            const target = parseFloat(el.dataset.target);
+            const prefix = el.dataset.prefix || '';
+            const suffix = el.dataset.suffix || '';
+            animateCounter(el, target, 1200, prefix, suffix);
+        });
+    }, 500);
+
+    // ── 5. SCROLL REVEAL ──
+    const revealEls = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(el => revealObserver.observe(el));
+
+    // ── 6. LIVE BALANCE FLICKER (realness) ──
+    const balEl = document.querySelector('.pv-stat-val:not(.g):not(.r)');
+    if (balEl) {
+        const baseVal = 12480000;
+        setInterval(() => {
+            const delta = Math.floor((Math.random() - 0.3) * 5000);
+            const newVal = baseVal + delta;
+            balEl.textContent = newVal.toLocaleString('ru-RU');
+            balEl.style.transition = 'color .3s';
+            balEl.style.color = delta > 0 ? 'var(--green)' : 'var(--red)';
+            setTimeout(() => balEl.style.color = '', 800);
+        }, 4500);
+    }
+
+    // ── 7. TRANZAKSIYA ROW HIGHLIGHT ──
+    const txRows = document.querySelectorAll('.pv-tx');
+    let txIdx = 0;
+    function highlightTx() {
+        txRows.forEach(r => r.style.borderColor = '');
+        if (txRows[txIdx]) {
+            txRows[txIdx].style.borderColor = 'var(--border2)';
+            txRows[txIdx].style.background = 'var(--card)';
+            setTimeout(() => {
+                if (txRows[txIdx]) {
+                    txRows[txIdx].style.borderColor = '';
+                    txRows[txIdx].style.background = '';
+                }
+            }, 1200);
+        }
+        txIdx = (txIdx + 1) % txRows.length;
+    }
+    setTimeout(() => setInterval(highlightTx, 2800), 1800);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+{% if ai_tips %}
+
+{# ─── DASHBOARD: keng karta, 4 ta tavsiya ─────────────────────────────────── #}
+{% if ai_topic == 'dashboard' or not ai_topic %}
+<div class="card ai-tips-card" style="margin-bottom:20px; position:relative; overflow:hidden;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#06b6d4,#3b82f6,#8b5cf6);"></div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <div class="card-title" style="margin:0; display:flex; align-items:center; gap:8px;">
+            <span style="width:28px;height:28px;border-radius:8px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);display:inline-flex;align-items:center;justify-content:center;">
+                <i class="ti ti-sparkles" style="color:#60a5fa;font-size:14px;"></i>
+            </span>
+            {% t "AI tavsiyalar" %}
+        </div>
+        {% include 'partials/_ai_badge.html' %}
+    </div>
+
+    <div style="display:grid; gap:10px;">
+        {% for tip in ai_tips %}
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+            <div style="width:24px;height:24px;border-radius:6px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+                <i class="ti {% if forloop.first %}ti-chart-bar{% elif forloop.last %}ti-message-question{% else %}ti-bulb{% endif %}" style="color:#60a5fa;font-size:11px;"></i>
+            </div>
+            <div style="background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.15);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--text-muted);line-height:1.55;width:100%;">
+                {{ tip }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{# ─── BUDGETS / DEBTS / TRANSACTIONS: ixcham gorizontal banner ─────────────── #}
+{% elif ai_topic == 'budgets' or ai_topic == 'debts' or ai_topic == 'transactions' %}
+<style>
+.ai-tip-span {
+    font-size:13px;
+    line-height:1.5;
+    color: var(--text-muted);
+}
+.ai-tip-span.ai-tip-accent {
+    color: var(--accent);
+    font-style: italic;
+}
+</style>
+<div style="margin-bottom:20px; background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; position:relative;">
+    <div style="position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,#3b82f6,#8b5cf6);"></div>
+    <div style="padding:11px 16px 12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">
+            <div style="display:flex; align-items:center; gap:7px; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px;">
+                <i class="ti ti-sparkles" style="color:#60a5fa; font-size:12px;"></i> {% t "AI maslahat" %}
+            </div>
+            {% include 'partials/_ai_badge.html' %}
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+            {% for tip in ai_tips %}
+            <div style="display:flex; gap:8px; align-items:flex-start;">
+                <span style="font-size:12px; flex-shrink:0; margin-top:2px;">
+                    <i class="ti {% if forloop.first %}ti-chart-bar{% elif forloop.last %}ti-message-question{% else %}ti-bulb{% endif %}" style="color:#60a5fa; font-size:12px;"></i>
+                </span>
+                <span class="ai-tip-span{% if forloop.last %} ai-tip-accent{% endif %}">
+                    {{ tip }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% elif ai_topic == 'analytics' %}
+<div style="margin-bottom:20px; background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; position:relative;">
+    <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,#06b6d4,#3b82f6);"></div>
+    <div style="padding:11px 16px 12px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:9px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.6px;">
+                <i class="ti ti-activity" style="color:#06b6d4; font-size:12px;"></i> {% t "AI tahlil" %}
+            </div>
+            {% include 'partials/_ai_badge.html' %}
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            {% for tip in ai_tips %}
+            <div style="display:flex; align-items:flex-start; gap:6px; flex:1; min-width:220px; background:rgba(6,182,212,.05); border:1px solid rgba(6,182,212,.15); border-radius:9px; padding:8px 10px;">
+                <i class="ti {% if forloop.first %}ti-chart-dots{% elif forloop.last %}ti-help-circle{% else %}ti-trending-up{% endif %}" style="color:#06b6d4; font-size:12px; margin-top:2px; flex-shrink:0;"></i>
+                <span class="ai-tip-span{% if forloop.last %} ai-tip-accent{% endif %}">
+                    {{ tip }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ─── AI ASSISTANT: bitta xulosa qatori ───────────────────────────────────── #}
+{% elif ai_topic == 'assistant' %}
+<div style="margin-bottom:16px; padding:10px 14px; background:rgba(59,130,246,.07); border:1px solid rgba(59,130,246,.2); border-radius:10px; font-size:13px; color:var(--text-muted); display:flex; gap:8px; align-items:flex-start;">
+    <i class="ti ti-sparkles" style="color:#60a5fa; font-size:14px; margin-top:1px; flex-shrink:0;"></i>
+    <span>{{ ai_tips.0 }}</span>
+</div>
+
+{% endif %}
+{% endif %}

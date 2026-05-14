@@ -1,0 +1,26 @@
+# ─── Core framework ───────────────────────────────────────────────────────────
+Django>=5.2,<6.0
+
+# ─── Image processing (avatar uploads) ───────────────────────────────────────
+Pillow>=10.0.0,<12.0.0
+
+# ─── Static file serving ──────────────────────────────────────────────────────
+# WhiteNoise serves compressed static files — no CDN needed for small deployments
+whitenoise[brotli]>=6.7.0,<7.0.0
+
+# ─── Production app server ────────────────────────────────────────────────────
+gunicorn>=22.0.0,<24.0.0
+
+# ─── Database ─────────────────────────────────────────────────────────────────
+# psycopg2-binary for easier install; use psycopg2 (compiled) for production
+psycopg2-binary>=2.9.9,<3.0.0
+
+# ─── File / object storage ────────────────────────────────────────────────────
+django-storages>=1.14.3,<2.0.0
+
+# ─── Configuration ────────────────────────────────────────────────────────────
+python-decouple>=3.8,<4.0
+
+# ─── Optional: Redis cache + sessions ─────────────────────────────────────────
+# Uncomment for production Redis support:
+# redis>=5.0.0,<6.0.0

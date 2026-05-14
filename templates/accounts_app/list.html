@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Hisob raqamlar" %}{% endblock %}
+{% block page_title %}
+<span class="title-icon"><i class="ti ti-credit-card"></i></span>
+{% if finance_scope == 'family' %}{% t "Oila hisoblari" %}{% else %}{% t "Hisob raqamlar" %}{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'account_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i>{% t "Yangi hisob" %}</a>
+{% endblock %}
+
+{% block content %}
+{% t "Hisob o'chirilsinmi?" as confirm_account_delete %}
+<div class="stats-grid">
+    <div class="stat-card purple">
+        <div class="stat-label">{% t "Umumiy balans" %}</div>
+        <div class="stat-value">{{ total_balance|floatformat:0 }}</div>
+        <div style="font-size:12px; color:var(--text-muted);">{% t "UZS ekvivalent" %}</div>
+        <div class="stat-icon"><i class="ti ti-wallet"></i></div>
+    </div>
+    <div class="stat-card teal">
+        <div class="stat-label">{% t "Hisoblar soni" %}</div>
+        <div class="stat-value">{{ accounts|length }}</div>
+        <div style="font-size:12px; color:var(--text-muted);">{% t "Faol hisoblar" %}</div>
+        <div class="stat-icon"><i class="ti ti-credit-card"></i></div>
+    </div>
+</div>
+
+{% if accounts %}
+<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap:16px;">
+    {% for acc in accounts %}
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; position:relative;">
+        <!-- Card top color bar -->
+        <div style="height:4px; background:{{ acc.color }};"></div>
+        
+        <!-- Card header -->
+        <div style="padding:20px; background:linear-gradient(135deg, {{ acc.color }}15, transparent);">
+            <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+                <div style="width:52px; height:52px; border-radius:14px; background:{{ acc.color }}22; display:flex; align-items:center; justify-content:center; font-size:26px; border:1px solid {{ acc.color }}44;">
+                    {{ acc.icon|icon:"xl" }}
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:17px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{% tacc acc.name %}</div>
+                    <div style="font-size:12px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{% t acc.get_account_type_display %}</div>
+                </div>
+                <div style="text-align:right; flex:0 0 auto; max-width:200px;">
+                    <div style="font-size:clamp(16px, 2.2vw, 22px); font-weight:800; color:{{ acc.color }}; line-height:1.1; white-space:nowrap;" title="{{ acc.balance|floatformat:0 }}">
+                        {{ acc.balance|compact_num:request.LANGUAGE_CODE }}
+                    </div>
+                    <div style="font-size:12px; color:var(--text-muted);">{{ acc.currency }}</div>
+                </div>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--text-muted); padding:10px; background:var(--surface2); border-radius:8px;">
+                <span style="min-width:0; white-space:nowrap;">{% t "Boshlang'ich:" %}<strong style="color:var(--text);" title="{{ acc.initial_balance|floatformat:0 }}">{{ acc.initial_balance|compact_num:request.LANGUAGE_CODE }}</strong></span>
+                <span>{% if acc.include_in_total %}{{ "check"|icon:"sm" }} {% t "Umumiyda" %}{% else %}{{ "ban"|icon:"sm" }} {% t "Umumiyda emas" %}{% endif %}</span>
+            </div>
+        </div>
+
+        <!-- Card actions -->
+        <div style="padding:12px 20px; border-top:1px solid var(--border); display:flex; gap:8px;">
+            <a href="{% url 'account_detail' acc.pk %}" class="btn btn-secondary btn-sm" style="flex:1; justify-content:center;"><i class="ti ti-eye"></i>{% t "Ko'rish" %}</a>
+            <a href="{% url 'account_edit' acc.pk %}" class="btn btn-secondary btn-sm" style="flex:1; justify-content:center;"><i class="ti ti-edit"></i>{% t "Tahrir" %}</a>
+            <form method="post" action="{% url 'account_delete' acc.pk %}" style="flex:1;" onsubmit="return confirm('{{ confirm_account_delete|escapejs }}')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm" style="width:100%; justify-content:center;"><i class="ti ti-trash"></i>{% t "O'chirish" %}</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">{{ "credit-card"|icon:"xl" }}</div>
+        <div class="empty-state-title">{% t "Hisob raqamlar yo'q" %}</div>
+        <div class="empty-state-desc">{% t "Bank karta yoki naqd pul hisobini qo'shing" %}</div>
+        <a href="{% url 'account_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i>{% t "Birinchi hisobni qo'shish" %}</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

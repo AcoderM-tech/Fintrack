@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Qarz va haqdorlik" %}{% endblock %}
+{% block page_title %}<span class="title-icon"><i class="ti ti-wallet"></i></span> {% t "Qarz va haqdorlik" %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'debt_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i>{% t "Qarz qo'shish" %}</a>
+{% endblock %}
+
+{% block content %}
+{% t "O'chirilsinmi?" as confirm_delete %}
+<div class="stats-grid" style="margin-bottom:24px;">
+    <div class="stat-card green">
+        <div class="stat-label">{% t "Olishim kerak (jami)" %}</div>
+        <div class="stat-value amount-green">{{ total_given_open|floatformat:0 }}</div>
+        <div style="font-size:12px; color:var(--text-muted);">{% t "so'm" %}</div>
+        <div class="stat-icon"><i class="ti ti-wallet"></i></div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-label">{% t "To'lashim kerak (jami)" %}</div>
+        <div class="stat-value amount-red">{{ total_taken_open|floatformat:0 }}</div>
+        <div style="font-size:12px; color:var(--text-muted);">{% t "so'm" %}</div>
+        <div class="stat-icon"><i class="ti ti-wallet"></i></div>
+    </div>
+</div>
+
+{% include 'partials/ai_tips.html' %}
+
+<div class="grid-2">
+    <!-- Given debts (to receive) -->
+    <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-down"></i>{% t "Men bergan qarzlar (olishim kerak)" %}</div>
+        {% for debt in given_debts %}
+        <div style="background:var(--surface2); border-radius:12px; padding:16px; margin-bottom:12px; border:1px solid {% if debt.is_overdue %}rgba(239,68,68,.3){% else %}var(--border){% endif %};">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <div>
+                    <div style="font-weight:600; font-size:15px;">{{ debt.person_name }}</div>
+                    {% if debt.person_phone %}<div style="font-size:12px; color:var(--text-muted);"><i class="ti ti-phone"></i> {{ debt.person_phone }}</div>{% endif %}
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:700; color:var(--green);">{{ debt.remaining_amount|floatformat:0 }}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">{{ debt.currency }}</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+                {% if debt.status == 'open' %}<span class="badge badge-yellow"><i class="ti ti-clock"></i>{% t "Ochiq" %}</span>
+                {% elif debt.status == 'partial' %}<span class="badge badge-blue"><i class="ti ti-adjustments"></i>{% t "Qisman" %}</span>
+                {% else %}<span class="badge badge-green"><i class="ti ti-check"></i>{% t "Yopiq" %}</span>{% endif %}
+                {% if debt.is_overdue %}<span class="badge badge-red"><i class="ti ti-alert-triangle"></i>{% t "Muddati o'tdi" %}</span>{% endif %}
+                <span style="font-size:12px; color:var(--text-muted);">{{ debt.date }}</span>
+                {% if debt.due_date %}<span style="font-size:12px; color:var(--text-muted);"><i class="ti ti-arrow-right"></i> {{ debt.due_date }}</span>{% endif %}
+            </div>
+            {% if debt.paid_amount > 0 %}
+            <div style="margin-bottom:8px;">
+                <div class="progress">
+                    <div class="progress-bar" style="width:{% widthratio debt.paid_amount debt.amount 100 %}%; background:var(--green);"></div>
+                </div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">{% t "To'landi" %}: {{ debt.paid_amount|floatformat:0 }} / {{ debt.amount|floatformat:0 }}</div>
+            </div>
+            {% endif %}
+            {% if debt.description %}<div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">{{ debt.description }}</div>{% endif %}
+            <div style="display:flex; gap:6px;">
+                {% if debt.status != 'closed' %}
+                <a href="{% url 'debt_payment' debt.pk %}" class="btn btn-success btn-sm"><i class="ti ti-wallet"></i>{% t "To'lov" %}</a>
+                <form method="post" action="{% url 'debt_close' debt.pk %}" onsubmit="return confirm('{% t "Yopilsinmi?" %}')">
+                    {% csrf_token %}<button type="submit" class="btn btn-secondary btn-sm"><i class="ti ti-check"></i>{% t "Yopish" %}</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url 'debt_delete' debt.pk %}" onsubmit="return confirm('{{ confirm_delete|escapejs }}')">
+                    {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="ti ti-trash"></i></button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="padding:24px;">
+            <div class="empty-state-icon"><i class="ti ti-wallet"></i></div>
+            <div class="empty-state-title">{% t "Qarzlar yo'q" %}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Taken debts (to pay) -->
+    <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-up"></i>{% t "Men olgan qarzlar (to'lashim kerak)" %}</div>
+        {% for debt in taken_debts %}
+        <div style="background:var(--surface2); border-radius:12px; padding:16px; margin-bottom:12px; border:1px solid {% if debt.is_overdue %}rgba(239,68,68,.3){% else %}var(--border){% endif %};">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <div>
+                    <div style="font-weight:600; font-size:15px;">{{ debt.person_name }}</div>
+                    {% if debt.person_phone %}<div style="font-size:12px; color:var(--text-muted);"><i class="ti ti-phone"></i> {{ debt.person_phone }}</div>{% endif %}
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:700; color:var(--red);">{{ debt.remaining_amount|floatformat:0 }}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">{{ debt.currency }}</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+                {% if debt.status == 'open' %}<span class="badge badge-yellow"><i class="ti ti-clock"></i>{% t "Ochiq" %}</span>
+                {% elif debt.status == 'partial' %}<span class="badge badge-blue"><i class="ti ti-adjustments"></i>{% t "Qisman" %}</span>
+                {% else %}<span class="badge badge-green"><i class="ti ti-check"></i>{% t "Yopiq" %}</span>{% endif %}
+                {% if debt.is_overdue %}<span class="badge badge-red"><i class="ti ti-alert-triangle"></i>{% t "Muddati o'tdi" %}</span>{% endif %}
+                <span style="font-size:12px; color:var(--text-muted);">{{ debt.date }}</span>
+                {% if debt.due_date %}<span style="font-size:12px; color:var(--text-muted);"><i class="ti ti-arrow-right"></i> {{ debt.due_date }}</span>{% endif %}
+            </div>
+            {% if debt.paid_amount > 0 %}
+            <div style="margin-bottom:8px;">
+                <div class="progress">
+                    <div class="progress-bar" style="width:{% widthratio debt.paid_amount debt.amount 100 %}%; background:var(--accent);"></div>
+                </div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">{% t "To'landi" %}: {{ debt.paid_amount|floatformat:0 }} / {{ debt.amount|floatformat:0 }}</div>
+            </div>
+            {% endif %}
+            {% if debt.description %}<div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">{{ debt.description }}</div>{% endif %}
+            <div style="display:flex; gap:6px;">
+                {% if debt.status != 'closed' %}
+                <a href="{% url 'debt_payment' debt.pk %}" class="btn btn-secondary btn-sm"><i class="ti ti-wallet"></i>{% t "To'lov" %}</a>
+                <form method="post" action="{% url 'debt_close' debt.pk %}" onsubmit="return confirm('{% t "Yopilsinmi?" %}')">
+                    {% csrf_token %}<button type="submit" class="btn btn-secondary btn-sm"><i class="ti ti-check"></i>{% t "Yopish" %}</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{% url 'debt_delete' debt.pk %}" onsubmit="return confirm('{{ confirm_delete|escapejs }}')">
+                    {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="ti ti-trash"></i></button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="padding:24px;">
+            <div class="empty-state-icon"><i class="ti ti-wallet"></i></div>
+            <div class="empty-state-title">{% t "Qarzlar yo'q" %}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

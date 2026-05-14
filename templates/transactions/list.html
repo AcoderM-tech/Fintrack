@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}{% t "Tranzaksiyalar" %}{% endblock %}
+{% block page_title %}
+<span class="title-icon"><i class="ti ti-list-details"></i></span>
+{% if finance_scope == 'family' %}{% t "Umumiy xarajatlar" %}{% else %}{% t "Tranzaksiyalar" %}{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'transaction_create' %}?type=expense" class="btn btn-danger btn-sm"><i class="ti ti-arrow-down-right"></i>{% t "Xarajat" %}</a>
+<a href="{% url 'transaction_create' %}?type=income" class="btn btn-success btn-sm"><i class="ti ti-arrow-up-right"></i>{% t "Daromad" %}</a>
+<a href="{% url 'transaction_create' %}?type=transfer" class="btn btn-secondary btn-sm"><i class="ti ti-arrows-left-right"></i> {% t "Transfer" %}</a>
+{% endblock %}
+
+{% block content %}
+{% t "O'chirilsinmi?" as confirm_delete %}
+<!-- Filters -->
+<div class="card" style="margin-bottom:20px;">
+    <form method="get" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; align-items:end;">
+        <div>
+            <label class="form-label">{% t "Tur" %}</label>
+            <select name="type" class="form-control">
+                <option value="">{% t "Barchasi" %}</option>
+                <option value="expense" {% if filters.type == 'expense' %}selected{% endif %}>{% t "Xarajat" %}</option>
+                <option value="income" {% if filters.type == 'income' %}selected{% endif %}>{% t "Daromad" %}</option>
+                <option value="transfer" {% if filters.type == 'transfer' %}selected{% endif %}>{% t "Transfer" %}</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label">{% t "Kategoriya" %}</label>
+            <select name="category" class="form-control">
+                <option value="">{% t "Barchasi" %}</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.pk }}" {% if filters.category == cat.pk|stringformat:"s" %}selected{% endif %}>{% tcat cat.name %}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label">{% t "Hisob" %}</label>
+            <select name="account" class="form-control">
+                <option value="">{% t "Barchasi" %}</option>
+                {% for acc in accounts %}
+                    <option value="{{ acc.pk }}" {% if filters.account == acc.pk|stringformat:"s" %}selected{% endif %}>{% tacc acc.name %}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label">{% t "Qidirish" %}</label>
+            <input type="text" name="search" class="form-control" placeholder='{% t "Tavsif bo'yicha..." %}' value="{{ filters.search }}">
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-filter"></i> {% t "Filter" %}</button>
+            <a href="{% url 'transaction_list' %}" class="btn btn-secondary btn-sm"><i class="ti ti-refresh"></i></a>
+        </div>
+    </form>
+</div>
+
+{% include 'partials/ai_tips.html' %}
+
+<!-- Transactions -->
+<div class="card">
+    {% if transactions %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>{% t "Tur" %}</th>
+                    <th>{% t "Tavsif" %}</th>
+                    <th>{% t "Kategoriya" %}</th>
+                    <th>{% t "Hisob" %}</th>
+                    <th>{% t "Sana" %}</th>
+                    <th style="text-align:right;">{% t "Summa" %}</th>
+                    <th>{% t "Amal" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td>
+                        {% if t.transaction_type == 'expense' %}<span class="badge badge-red"><i class="ti ti-arrow-down-right"></i>{% t "Xarajat" %}</span>
+                        {% elif t.transaction_type == 'income' %}<span class="badge badge-green"><i class="ti ti-arrow-up-right"></i>{% t "Daromad" %}</span>
+                        {% else %}<span class="badge badge-blue"><i class="ti ti-arrows-left-right"></i> {% t "Transfer" %}</span>{% endif %}
+                    </td>
+                    <td style="max-width:200px;">
+                        <div style="font-weight:500;">{{ t.description|default:"-" }}</div>
+                        {% if t.notes %}<div style="font-size:11px; color:var(--text-muted);">{{ t.notes|truncatechars:40 }}</div>{% endif %}
+                    </td>
+                    <td>{% if t.category %}{{ t.category.icon|icon:"sm" }} {% tcat t.category.name %}{% else %}-{% endif %}</td>
+                    <td style="font-size:12px;">
+                        {% if t.account %}{% tacc t.account.name %}{% else %}-{% endif %}
+                        {% if t.to_account %}<br><span style="color:var(--text-muted);"><i class="ti ti-arrow-right"></i> {% tacc t.to_account.name %}</span>{% endif %}
+                    </td>
+                    <td style="color:var(--text-muted); font-size:12px;">{{ t.date }}</td>
+                    <td style="text-align:right; font-weight:700; color:{% if t.transaction_type == 'expense' %}var(--red){% elif t.transaction_type == 'income' %}var(--green){% else %}#60a5fa{% endif %}; white-space:nowrap;">
+                        {% if t.transaction_type == 'expense' %}-{% elif t.transaction_type == 'income' %}+{% endif %}{{ t.amount|floatformat:0 }} {{ t.currency }}
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:4px;">
+                            <a href="{% url 'transaction_edit' t.pk %}" class="btn btn-secondary btn-sm" style="padding:4px 8px;"><i class="ti ti-edit"></i></a>
+                            <form method="post" action="{% url 'transaction_delete' t.pk %}" onsubmit="return confirm('{{ confirm_delete|escapejs }}')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" style="padding:4px 8px;"><i class="ti ti-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">{{ "list-details"|icon:"xl" }}</div>
+        <div class="empty-state-title">{% t "Tranzaksiyalar topilmadi" %}</div>
+        <div class="empty-state-desc">{% t "Filter yoki yangi tranzaksiya qo'shing" %}</div>
+        <a href="{% url 'transaction_create' %}" class="btn btn-primary"><i class="ti ti-plus"></i>{% t "Yangi qo'shish" %}</a>
+    </div>
+    {% endif %}
+
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+    {% load core_tags %}
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 0 4px;">
+        <div style="font-size:12px;color:var(--text-muted);">
+            {% t "Ko'rsatilmoqda" %} {{ page_obj.start_index }}–{{ page_obj.end_index }} / {{ page_obj.paginator.count }}
+        </div>
+        <nav aria-label="Pagination" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            {% if page_obj.has_previous %}
+                <a href="{% url_replace 'page' 1 %}" class="btn btn-secondary btn-sm" title="{% t "Birinchi" %}">
+                    <i class="ti ti-chevrons-left"></i>
+                </a>
+                <a href="{% url_replace 'page' page_obj.previous_page_number %}" class="btn btn-secondary btn-sm">
+                    <i class="ti ti-chevron-left"></i>{% t "Oldingi" %}
+                </a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="btn btn-primary btn-sm" aria-current="page">{{ num }}</span>
+                {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                    <a href="{% url_replace 'page' num %}" class="btn btn-secondary btn-sm">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <a href="{% url_replace 'page' num %}" class="btn btn-secondary btn-sm">{{ num }}</a>
+                {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+                    <span style="color:var(--text-muted);padding:0 4px;">…</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="{% url_replace 'page' page_obj.next_page_number %}" class="btn btn-secondary btn-sm">
+                    {% t "Keyingi" %}<i class="ti ti-chevron-right"></i>
+                </a>
+                <a href="{% url_replace 'page' page_obj.paginator.num_pages %}" class="btn btn-secondary btn-sm" title="{% t "Oxirgi" %}">
+                    <i class="ti ti-chevrons-right"></i>
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

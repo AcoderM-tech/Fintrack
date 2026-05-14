@@ -1,0 +1,415 @@
+{% load static %}{% load core_tags %}<!DOCTYPE html>
+<html lang="{{ request.LANGUAGE_CODE|default:'uz' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}FinTrack{% endblock %} | {% t "Moliyaviy Boshqaruv" %}</title>
+
+    <!-- Theme flash prevention — inline & synchronous, intentionally tiny -->
+    <meta name="theme-color" content="#0a0e27">
+    <script>(function(){try{var s=localStorage.getItem('fintrack_theme');if(s==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}}());</script>
+    <style>html,body{background:#0a0e27;color:#fff;}html[data-theme="light"],html[data-theme="light"] body{background:#f7f8fb;color:#0f172a;}</style>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+
+    <!-- FinTrack base stylesheet -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    <!-- Per-page CSS (HTMX-swappable) -->
+    <style id="page-extra-css" hx-swap-oob="true">
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="bg-decorations">
+        <div class="decoration-circle circle-1"></div>
+        <div class="decoration-circle circle-2"></div>
+        <div class="decoration-circle circle-3"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <div id="nav-state"
+         data-url-name="{{ request.resolver_match.url_name|default:'' }}"
+         data-scope="{{ finance_scope|default:'' }}"
+         data-family="{{ active_family.id|default:'' }}"
+         data-type="{{ request.GET.type|default:'' }}"
+         data-path="{{ request.path }}"
+         data-fullpath="{{ request.get_full_path }}"
+         hx-swap-oob="true"
+         hidden></div>
+
+    <div class="page-shell">
+
+        <div class="dashboard-frame">
+            <div class="overlay" id="overlay"></div>
+
+            <!-- ═══ SIDEBAR ═══ -->
+            <aside class="sidebar" id="sidebar" aria-label="{% t "Asosiy menyu" %}">
+                <div class="sidebar-logo">
+                    <div class="logo-text">
+                        <span class="logo-mark"><i class="ti ti-diamond"></i></span>
+                        <span>FinTrack</span>
+                    </div>
+                    <div class="logo-sub">{% t "Moliyaviy boshqaruv" %}</div>
+                </div>
+
+                <nav class="sidebar-nav"
+                     hx-boost="true"
+                     hx-target="#main-content"
+                     hx-select="#main-content"
+                     hx-select-oob="#page-extra-css,#page-extra-js,#nav-state"
+                     hx-swap="outerHTML show:#main-content:top"
+                     hx-push-url="true">
+
+                    <a href="{% url 'dashboard' %}?scope=personal" class="nav-link">
+                        <span class="nav-icon"><i class="ti ti-home"></i></span>
+                        <span>{% t "Dashboard" %}</span>
+                    </a>
+
+                    <a href="{% url 'ai_assistant' %}?scope=personal" class="nav-link">
+                        <span class="nav-icon"><i class="ti ti-sparkles"></i></span>
+                        <span>{% t "AI Yordamchi" %}</span>
+                    </a>
+
+                    <a href="{% url 'account_list' %}?scope=personal" class="nav-link">
+                        <span class="nav-icon"><i class="ti ti-credit-card"></i></span>
+                        <span>{% t "Hisob raqamlar" %}</span>
+                    </a>
+
+                    <div class="nav-group">
+                        <button type="button" class="nav-link nav-group-toggle" data-nav-toggle>
+                            <span class="nav-icon"><i class="ti ti-list-details"></i></span>
+                            <span>{% t "Pul harakati" %}</span>
+                            <span class="nav-caret"><i class="ti ti-chevron-down"></i></span>
+                        </button>
+                        <div class="nav-group-items">
+                            <a href="{% url 'transaction_list' %}?scope=personal" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-list-details"></i></span>
+                                <span>{% t "Tranzaksiyalar" %}</span>
+                            </a>
+                            <a href="{% url 'transaction_create' %}?type=expense&scope=personal" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-arrow-down-right"></i></span>
+                                <span>{% t "Xarajat qo'shish" %}</span>
+                            </a>
+                            <a href="{% url 'transaction_create' %}?type=income&scope=personal" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-arrow-up-right"></i></span>
+                                <span>{% t "Daromad qo'shish" %}</span>
+                            </a>
+                            <a href="{% url 'transaction_create' %}?type=transfer&scope=personal" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-arrows-left-right"></i></span>
+                                <span>{% t "Transfer" %}</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-group">
+                        <button type="button" class="nav-link nav-group-toggle" data-nav-toggle>
+                            <span class="nav-icon"><i class="ti ti-chart-line"></i></span>
+                            <span>{% t "Tahlil" %}</span>
+                            <span class="nav-caret"><i class="ti ti-chevron-down"></i></span>
+                        </button>
+                        <div class="nav-group-items">
+                            <a href="{% url 'analytics' %}?scope=personal" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-chart-line"></i></span>
+                                <span>{% t "Statistika" %}</span>
+                            </a>
+                            <a href="{% url 'calendar' %}?scope=personal" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-calendar"></i></span>
+                                <span>{% t "Kalendar" %}</span>
+                            </a>
+                            <a href="{% url 'budget_list' %}?scope=personal" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-target"></i></span>
+                                <span>{% t "Byudjet" %}</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'debt_list' %}?scope=personal" class="nav-link">
+                        <span class="nav-icon"><i class="ti ti-wallet"></i></span>
+                        <span>{% t "Qarz & Haqdorlik" %}</span>
+                    </a>
+
+                    {% with fam_id=active_family.id|default:last_family_id %}
+                    <div class="nav-group">
+                        <button type="button" class="nav-link nav-group-toggle" data-nav-toggle>
+                            <span class="nav-icon"><i class="ti ti-users-group"></i></span>
+                            <span>{% t "Oila" %}</span>
+                            <span class="nav-caret"><i class="ti ti-chevron-down"></i></span>
+                        </button>
+                        <div class="nav-group-items">
+                            <a href="{% if fam_id %}{% url 'family' %}?scope=family&family_id={{ fam_id }}{% else %}{% url 'family' %}{% endif %}" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-users-group"></i></span>
+                                <span>{% t "Oila boshqaruvi" %}</span>
+                            </a>
+                            <a href="{% if fam_id %}{% url 'family_stats' %}?scope=family&family_id={{ fam_id }}{% else %}{% url 'family' %}{% endif %}" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-chart-bar"></i></span>
+                                <span>{% t "A'zolar statistikasi" %}</span>
+                            </a>
+                            <a href="{% if fam_id %}{% url 'analytics' %}?scope=family&family_id={{ fam_id }}{% else %}{% url 'family' %}{% endif %}" class="nav-link">
+                                <span class="nav-icon"><i class="ti ti-chart-line"></i></span>
+                                <span>{% t "Oila statistikasi" %}</span>
+                            </a>
+                        </div>
+                    </div>
+                    {% endwith %}
+
+                    <a href="{% url 'profile' %}" class="nav-link">
+                        <span class="nav-icon"><i class="ti ti-settings"></i></span>
+                        <span>{% t "Sozlamalar" %}</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="user-card">
+                        <div class="user-avatar">
+                            {% if user_avatar_url %}<img src="{{ user_avatar_url }}" alt="avatar">
+                            {% else %}{% with fn=request.user.first_name ln=request.user.last_name un=request.user.username %}{% if fn %}{{ fn|slice:":1"|upper }}{% if ln %}{{ ln|slice:":1"|upper }}{% endif %}{% else %}{{ un|slice:":2"|upper }}{% endif %}{% endwith %}{% endif %}
+                        </div>
+                        <div style="min-width:0;flex:1;">
+                            <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                            <div class="user-role">{{ request.user.email|default:"" }}</div>
+                        </div>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn" title="{% t 'Chiqish' %}"><i class="ti ti-power"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ═══ MAIN ═══ -->
+            <main class="main" id="main-content">
+                <header class="topbar">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <button class="hamburger" onclick="toggleSidebar()" id="hamburgerBtn"
+                                aria-label="{% t "Menyuni ochish" %}" aria-expanded="false">
+                            <i class="ti ti-menu-2"></i>
+                        </button>
+                        <h1 class="page-title">{% block page_title %}{% t "Dashboard" %}{% endblock %}</h1>
+                    </div>
+                    <div class="topbar-actions">
+                        {% block topbar_actions %}{% endblock %}
+                        <button type="button" class="theme-toggle" id="themeToggle"
+                                data-label-light="{% t "Tungi rejim" %}"
+                                data-label-dark="{% t "Kunduzgi rejim" %}"
+                                aria-label="{% t "Tungi rejim" %}"
+                                title="{% t "Tungi rejim" %}">
+                            <i class="ti ti-moon"></i>
+                        </button>
+                        {% include 'partials/language_switcher.html' %}
+                        <div class="notif-wrap" id="notifWrap">
+                            <button type="button" class="notif-bell" id="notifBell"
+                                    aria-label="{% t "Bildirishnomalar" %}"
+                                    aria-haspopup="dialog" aria-expanded="false"
+                                    title="{% t "Bildirishnomalar" %}">
+                                <i class="ti ti-bell"></i>
+                                {% if notif_unread_count and notif_unread_count > 0 %}
+                                    <span class="notif-badge" id="notifBadge">{{ notif_unread_count }}</span>
+                                {% endif %}
+                            </button>
+                            <div class="notif-panel" id="notifPanel"
+                                 role="dialog" aria-label="{% t "Bildirishnomalar" %}" aria-hidden="true">
+                                <div class="notif-panel-header">
+                                    <div class="notif-panel-title">{% t "Bildirishnomalar" %}</div>
+                                </div>
+                                <div class="notif-panel-list">
+                                    {% if menu_notifications %}
+                                        {% for n in menu_notifications %}
+                                            <div class="notif-row" data-level="{{ n.level }}">
+                                                <div class="notif-row-icon">
+                                                    {% if n.level == 'success' %}<i class="ti ti-check"></i>
+                                                    {% elif n.level == 'warning' %}<i class="ti ti-alert-triangle"></i>
+                                                    {% elif n.level == 'danger' %}<i class="ti ti-alert-circle"></i>
+                                                    {% else %}<i class="ti ti-info-circle"></i>{% endif %}
+                                                </div>
+                                                <div style="min-width:0;">
+                                                    <div class="notif-row-title">{{ n.display_title|default:n.title }}</div>
+                                                    <div class="notif-row-message">{{ n.display_message|default:n.message }}</div>
+                                                    <div class="notif-row-time">{{ n.created_at|date:"d.m.Y H:i" }}</div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="notif-panel-empty">
+                                            <div class="notif-panel-empty-title">{% t "Hozircha bildirishnoma yo'q" %}</div>
+                                            <div class="notif-panel-empty-desc">{% t "Hammasi joyida." %}</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="topbar-user">
+                            {% if user_avatar_url %}
+                                <a href="{% url 'profile' %}" class="topbar-avatar" title="{% t 'Profil' %}">
+                                    <img src="{{ user_avatar_url }}" alt="avatar">
+                                </a>
+                            {% else %}
+                                <a href="{% url 'profile' %}" class="topbar-avatar-initials" title="{% t 'Profil' %}">
+                                    {% with fn=request.user.first_name ln=request.user.last_name un=request.user.username %}
+                                        {% if fn %}{{ fn|slice:":1"|upper }}{% if ln %}{{ ln|slice:":1"|upper }}{% endif %}{% else %}{{ un|slice:":2"|upper }}{% endif %}
+                                    {% endwith %}
+                                </a>
+                            {% endif %}
+                            <div class="topbar-user-info">
+                                <div class="topbar-user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                                <div class="topbar-user-email">{{ request.user.email|default:"" }}</div>
+                            </div>
+                            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                                {% csrf_token %}
+                                <button type="submit" class="logout-btn" title="{% t 'Chiqish' %}"><i class="ti ti-power"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="content">
+                    {% if messages %}
+                        {% for msg in messages %}
+                            <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %}">
+                                {% if msg.tags == 'success' %}<i class="ti ti-check"></i>
+                                {% elif msg.tags == 'error' %}<i class="ti ti-x"></i>
+                                {% elif msg.tags == 'warning' %}<i class="ti ti-alert-triangle"></i>
+                                {% else %}<i class="ti ti-info-circle"></i>{% endif %}
+                                {{ msg }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ═══ MOBILE BOTTOM NAV ═══ -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <a href="{% url 'dashboard' %}?scope=personal" class="mobile-nav-item" data-mobile-nav="dashboard">
+            <i class="ti ti-home"></i>
+            <span class="mobile-nav-label">{% t "Bosh" %}</span>
+        </a>
+        <a href="{% url 'transaction_list' %}?scope=personal" class="mobile-nav-item" data-mobile-nav="transaction_list">
+            <i class="ti ti-list-details"></i>
+            <span class="mobile-nav-label">{% t "Tranzaksiya" %}</span>
+        </a>
+        <a href="{% url 'transaction_create' %}?type=expense&scope=personal" class="mobile-nav-fab" data-mobile-nav="transaction_create">
+            <div class="mobile-nav-fab-circle"><i class="ti ti-plus"></i></div>
+            <span class="mobile-nav-label mobile-nav-fab-label">{% t "Yangi" %}</span>
+        </a>
+        <a href="{% url 'analytics' %}?scope=personal" class="mobile-nav-item" data-mobile-nav="analytics">
+            <i class="ti ti-chart-line"></i>
+            <span class="mobile-nav-label">{% t "Tahlil" %}</span>
+        </a>
+        <button type="button" class="mobile-nav-item" onclick="toggleSidebar()"
+                id="mobileMenuBtn" aria-expanded="false">
+            <i class="ti ti-menu-2"></i>
+            <span class="mobile-nav-label">{% t "Menyu" %}</span>
+        </button>
+    </nav>
+
+    <!-- Scroll-to-top -->
+    <button class="scroll-top-btn" id="scrollTopBtn"
+            aria-label="{% t "Tepaga qaytish" %}" title="{% t "Tepaga qaytish" %}">
+        <i class="ti ti-arrow-up"></i>
+    </button>
+
+    <!-- External scripts -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{% static 'js/theme.js' %}" defer></script>
+    <script src="{% static 'js/sidebar.js' %}" defer></script>
+
+    <!-- Notification dropdown + scroll-to-top + HTMX hooks (minimal inline) -->
+    <script>
+    (function () {
+        'use strict';
+
+        /* ── Notification dropdown ── */
+        function setNotifOpen(open) {
+            var w = document.getElementById('notifWrap');
+            var b = document.getElementById('notifBell');
+            var p = document.getElementById('notifPanel');
+            if (!w || !b || !p) return;
+            w.classList.toggle('open', !!open);
+            b.setAttribute('aria-expanded', open ? 'true' : 'false');
+            p.setAttribute('aria-hidden', open ? 'false' : 'true');
+        }
+        document.addEventListener('click', function (e) {
+            var w = document.getElementById('notifWrap');
+            if (!w) return;
+            var clickedBell = e.target && e.target.closest && e.target.closest('#notifBell');
+            if (clickedBell) {
+                e.preventDefault(); e.stopPropagation();
+                setNotifOpen(!w.classList.contains('open'));
+                return;
+            }
+            if (w.classList.contains('open') && !w.contains(e.target)) setNotifOpen(false);
+        });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setNotifOpen(false); });
+
+        /* ── Scroll-to-top ── */
+        var stb = document.getElementById('scrollTopBtn');
+        if (stb) {
+            function chkScroll() {
+                var scrolled = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                stb.classList.toggle('show', scrolled > 300);
+            }
+            stb.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            window.addEventListener('scroll', chkScroll, { passive: true });
+            chkScroll();
+        }
+
+        /* ── HTMX: fallback + re-init after partial swap ── */
+        var navSwap = false, navTimer = null, pendingUrl = null;
+
+        document.addEventListener('htmx:beforeRequest', function (e) {
+            var elt = (e.detail && e.detail.elt) || e.target;
+            if (!elt || !elt.closest) return;
+            var link = elt.tagName === 'A' ? elt : elt.closest('a');
+            if (!link || !link.closest('.sidebar-nav')) return;
+            navSwap = true;
+            pendingUrl = link.href || null;
+            window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+            if (pendingUrl) {
+                if (navTimer) clearTimeout(navTimer);
+                navTimer = setTimeout(function () { if (pendingUrl) window.location.href = pendingUrl; }, 1800);
+            }
+        });
+
+        document.addEventListener('htmx:afterSettle', function (e) {
+            if (!e.target || e.target.id !== 'main-content') return;
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            if (window.initLangSwitch) window.initLangSwitch(document);
+            if (window.bindThemeToggle) window.bindThemeToggle(document);
+            if (window._ft && window._ft.init) window._ft.init(document);
+            if (navSwap) {
+                navSwap = false; pendingUrl = null;
+                if (navTimer) { clearTimeout(navTimer); navTimer = null; }
+            }
+        });
+
+        document.addEventListener('htmx:responseError', function () {
+            if (pendingUrl) window.location.href = pendingUrl;
+        });
+
+        /* ── Number formatter ── */
+        window.formatNum = function (n) {
+            return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        };
+    })();
+    </script>
+
+    <!-- Per-page JS (HTMX-swappable) -->
+    <div id="page-extra-js" hx-swap-oob="true">
+        {% block extra_js %}{% endblock %}
+    </div>
+</body>
+</html>

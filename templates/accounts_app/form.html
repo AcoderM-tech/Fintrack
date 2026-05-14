@@ -1,0 +1,510 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'account_list' %}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+{% endblock %}
+
+{% block content %}
+<style>
+    .type-tabs { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; padding-bottom:4px; }
+    .type-tabs::-webkit-scrollbar { height:6px; }
+    .type-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius:999px; }
+    .type-tab {
+        border:1px solid var(--border);
+        background:var(--surface2);
+        color:var(--text);
+        font-size:12px;
+        padding:8px 12px;
+        border-radius:999px;
+        cursor:pointer;
+        transition:.2s;
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+    }
+    .type-tab.active {
+        border-color: rgba(99,102,241,.6);
+        box-shadow: 0 0 0 3px rgba(99,102,241,.18);
+        background: rgba(99,102,241,.14);
+    }
+    @media (max-width: 1024px) {
+        .account-preview-sticky { position: static !important; top: auto !important; }
+    }
+</style>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div style="max-width:980px; margin:0 auto 16px;">
+        <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">
+            {% t "Turi *" %}
+        </div>
+        <div class="type-tabs" id="accountTypeTabs">
+            <button type="button" class="type-tab" data-type="cash"
+                    data-label="{% t "Naqd pul" %}"
+                    data-name-label="{% t "Kassa nomi" %}"
+                    data-name-placeholder="{% t "Masalan: Kassa" %}"
+                    data-number-label=""
+                    data-number-placeholder=""
+                    data-number-help="">
+                <i class="ti ti-wallet"></i> {% t "Naqd pul" %}
+            </button>
+            <button type="button" class="type-tab" data-type="card"
+                    data-label="{% t "Bank kartasi" %}"
+                    data-name-label="{% t "Karta nomi" %}"
+                    data-name-placeholder="{% t "Masalan: UzCard, Humo" %}"
+                    data-number-label="{% t "Karta raqami" %}"
+                    data-number-placeholder="{% t "Masalan: 8600 1234 5678 9012" %}"
+                    data-number-help="{% t "Faqat 16 raqam" %}">
+                <i class="ti ti-credit-card"></i> {% t "Bank kartasi" %}
+            </button>
+            <button type="button" class="type-tab" data-type="bank"
+                    data-label="{% t "Bank hisob raqami" %}"
+                    data-name-label="{% t "Hisob nomi" %}"
+                    data-name-placeholder="{% t "Masalan: Asosiy hisob" %}"
+                    data-number-label="{% t "Hisob raqami" %}"
+                    data-number-placeholder="{% t "Masalan: 4081 2345 6789 0123" %}"
+                    data-number-help="{% t "Faqat 16 raqam" %}">
+                <i class="ti ti-building-bank"></i> {% t "Bank hisob raqami" %}
+            </button>
+            <button type="button" class="type-tab" data-type="savings"
+                    data-label="{% t "Jamg'arma" %}"
+                    data-name-label="{% t "Jamg'arma nomi" %}"
+                    data-name-placeholder="{% t "Masalan: Zaxira" %}"
+                    data-number-label=""
+                    data-number-placeholder=""
+                    data-number-help="">
+                <i class="ti ti-pig-money"></i> {% t "Jamg'arma" %}
+            </button>
+            <button type="button" class="type-tab" data-type="investment"
+                    data-label="{% t "Investitsiya" %}"
+                    data-name-label="{% t "Investitsiya nomi" %}"
+                    data-name-placeholder="{% t "Masalan: Aksiyalar" %}"
+                    data-number-label=""
+                    data-number-placeholder=""
+                    data-number-help="">
+                <i class="ti ti-chart-line"></i> {% t "Investitsiya" %}
+            </button>
+            <button type="button" class="type-tab" data-type="crypto"
+                    data-label="{% t "Kripto" %}"
+                    data-name-label="{% t "Kripto hamyon" %}"
+                    data-name-placeholder="{% t "Masalan: BTC hamyon" %}"
+                    data-number-label=""
+                    data-number-placeholder=""
+                    data-number-help="">
+                <i class="ti ti-currency-bitcoin"></i> {% t "Kripto" %}
+            </button>
+        </div>
+        <select name="account_type" class="form-control" id="accountTypeSelect" style="display:none;">
+            {% for value, label in account_types %}
+                <option value="{{ value }}" {% if account and account.account_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="grid-2" style="max-width: 980px; margin: 0 auto; align-items:start;">
+    <div class="card">
+
+        <div class="form-group">
+            <label class="form-label" id="accountNameLabel">{% t "Hisob nomi *" %}</label>
+            <input type="text" name="name" class="form-control" id="accountNameInput" placeholder="{% t "Masalan: UzCard, Dollar karta" %}" required
+                   value="{{ account.name|default:'' }}">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Valyuta *" %}</label>
+            <select name="currency" class="form-control">
+                {% for value, label in currency_choices %}
+                    <option value="{{ value }}" {% if account and account.currency == value %}selected{% endif %}>{{ label }} ({{ value }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group" id="cardNumberGroup">
+            <label class="form-label" id="cardNumberLabel">{% t "Karta raqami" %}</label>
+            <input type="text" name="card_number" id="cardNumber" class="form-control"
+                   inputmode="numeric" autocomplete="cc-number" maxlength="19"
+                   placeholder="{% t "Masalan: 8600 1234 5678 9012" %}"
+                   value="{{ account.card_number|default:'' }}">
+            <div id="cardNumberHelp" style="font-size:11px; color:var(--text-muted); margin-top:6px;">{% t "Faqat 16 raqam" %}</div>
+        </div>
+
+        {% if not account %}
+        <div class="form-group">
+            <label class="form-label">{% t "Boshlang'ich balans" %}</label>
+            <input type="number" name="balance" class="form-control" placeholder="0" min="0" step="any" value="0">
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label class="form-label">{% t "Rang" %}</label>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+                {% for value, label in color_choices %}
+                <label style="cursor:pointer;">
+                    <input type="radio" name="color" value="{{ value }}" data-color="{{ value }}" {% if account.color == value or not account and forloop.first %}checked{% endif %} style="display:none;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:{{ value }}; border:3px solid transparent; transition:.2s;"
+                         onclick="this.previousElementSibling.click(); document.querySelectorAll('.color-dot').forEach(d=>d.style.borderColor='transparent'); this.style.borderColor='white';"
+                         class="color-dot"
+                         title="{{ label }}">
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Belgi (ikonka)" %}</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+                {% for icon in "credit-card,wallet,building,coins,chart-line,currency-bitcoin,diamond,briefcase,tag,receipt,shield,home"|split:"," %}
+                <label style="cursor:pointer;">
+                    <input type="radio" name="icon" value="{{ icon }}" data-icon="{{ icon }}" {% if account.icon == icon or not account and icon == 'credit-card' %}checked{% endif %} style="display:none;">
+                    <div style="width:40px; height:40px; border-radius:10px; background:var(--surface2); display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid transparent; transition:.2s;"
+                         onclick="this.previousElementSibling.click(); document.querySelectorAll('.emoji-opt').forEach(d=>d.style.borderColor='transparent'); this.style.borderColor='var(--accent)';"
+                         class="emoji-opt">
+                        {{ icon|icon:"lg" }}
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">{% t "Izoh" %}</label>
+            <textarea name="description" class="form-control" placeholder="{% t "Ixtiyoriy izoh..." %}">{{ account.description|default:'' }}</textarea>
+        </div>
+
+        {% if account %}
+        <div class="form-group">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                <input type="checkbox" name="include_in_total" {% if account.include_in_total %}checked{% endif %}
+                       style="width:18px; height:18px; accent-color:var(--accent);">
+                <span style="font-size:14px;">{% t "Umumiy balansga qo'shish" %}</span>
+            </label>
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:12px; margin-top:8px;">
+            <button type="submit" class="btn btn-primary" style="flex:1; justify-content:center;">
+                {% if account %}<i class="ti ti-check"></i> {% t "Saqlash" %}{% else %}<i class="ti ti-plus"></i> {% t "Qo'shish" %}{% endif %}
+            </button>
+            <a href="{% url 'account_list' %}" class="btn btn-secondary"><i class="ti ti-arrow-left"></i>{% t "Orqaga" %}</a>
+        </div>
+</div>
+
+<div class="card account-preview-sticky" style="position:sticky; top:90px;">
+    <div class="card-title" style="margin-bottom:12px;"><i class="ti ti-credit-card"></i>{% t "Karta ko'rinishi" %}</div>
+    <style>
+        .card-preview {
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(59,130,246,.18), rgba(139,92,246,.22));
+        }
+        .card-preview::before {
+            content: "";
+            position: absolute;
+            inset: 10px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            opacity: .5;
+            pointer-events: none;
+        }
+        .card-preview::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% -20%, rgba(255,255,255,0.18), transparent 60%);
+            opacity: .6;
+            pointer-events: none;
+        }
+        .card-preview[data-type="cash"] {
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(16,185,129,.28), rgba(34,197,94,.16));
+        }
+        .card-preview[data-type="cash"]::before {
+            border-radius: 10px;
+            border: 1px dashed rgba(255,255,255,0.22);
+        }
+        .card-preview[data-type="bank"] {
+            background: linear-gradient(135deg, rgba(56,189,248,.24), rgba(59,130,246,.18));
+        }
+        .card-preview[data-type="bank"]::before {
+            inset: 0;
+            border-radius: 0;
+            border: none;
+            background: linear-gradient(90deg, rgba(255,255,255,0.08) 0 30%, transparent 30% 100%);
+            opacity: .35;
+        }
+        .card-preview[data-type="savings"] {
+            background: linear-gradient(135deg, rgba(20,184,166,.22), rgba(14,116,144,.18));
+        }
+        .card-preview[data-type="savings"]::before {
+            border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card-preview[data-type="investment"] {
+            background: linear-gradient(135deg, rgba(250,204,21,.18), rgba(244,63,94,.16));
+        }
+        .card-preview[data-type="investment"]::before {
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(120deg, rgba(255,255,255,0.08), transparent 45%);
+        }
+        .card-preview[data-type="crypto"] {
+            background: linear-gradient(135deg, rgba(99,102,241,.22), rgba(30,41,59,.35));
+        }
+        .card-preview[data-type="crypto"]::before {
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08) 0 2px, transparent 3px),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.08) 0 2px, transparent 3px);
+        }
+        .card-preview[data-type="cash"]::after {
+            background: radial-gradient(circle at 15% -30%, rgba(255,255,255,0.2), transparent 55%);
+        }
+        .card-preview[data-type="bank"]::after {
+            background: linear-gradient(120deg, rgba(255,255,255,0.18), transparent 45%);
+        }
+        .card-preview[data-type="savings"]::after {
+            background: radial-gradient(circle at 30% 0%, rgba(255,255,255,0.2), transparent 65%);
+        }
+        .card-preview[data-type="investment"]::after {
+            background: linear-gradient(150deg, rgba(255,255,255,0.12), transparent 55%);
+        }
+        .card-preview[data-type="crypto"]::after {
+            background: radial-gradient(circle at 70% 0%, rgba(255,255,255,0.22), transparent 60%);
+        }
+        .card-preview-chip {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card-preview[data-type="cash"] .card-preview-chip { border-radius: 50%; }
+        .card-preview[data-type="bank"] .card-preview-chip { border-radius: 8px; }
+        .card-preview[data-type="savings"] .card-preview-chip { border-radius: 14px; }
+        .card-preview[data-type="crypto"] .card-preview-chip { border-radius: 6px; }
+        .card-preview-number {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        }
+        .card-preview[data-type="cash"] .card-preview-number,
+        .card-preview[data-type="savings"] .card-preview-number,
+        .card-preview[data-type="investment"] .card-preview-number,
+        .card-preview[data-type="crypto"] .card-preview-number {
+            font-size: 18px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .card-preview-type {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+    <div id="cardPreview" class="card-preview" data-type="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;">
+            <div id="cardPreviewIcon" class="card-preview-chip">
+                <i class="ti ti-credit-card" style="font-size:20px;"></i>
+            </div>
+            <div id="cardPreviewType" class="card-preview-type">{% t "Bank kartasi" %}</div>
+        </div>
+        <div class="card-preview-number" style="position:relative; z-index:1;">
+            <span id="cardPreviewPrefix" style="font-size:11px; color:var(--text-muted); margin-right:6px;"></span>
+            <span id="cardPreviewNumberText">#### #### #### ####</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--text-muted); position:relative; z-index:1;">
+            <div id="cardPreviewName" style="max-width:70%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{% t "Karta nomi" %}</div>
+            <div id="cardPreviewCurrency">UZS</div>
+        </div>
+    </div>
+    <div style="font-size:11px; color:var(--text-muted); margin-top:10px;">{% t "Raqam yozilganda avtomatik formatlanadi." %}</div>
+</div>
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const cardInput = document.getElementById('cardNumber');
+    const nameInput = document.getElementById('accountNameInput');
+    const nameLabel = document.getElementById('accountNameLabel');
+    const typeSelect = document.getElementById('accountTypeSelect');
+    const typeTabs = Array.from(document.querySelectorAll('#accountTypeTabs .type-tab'));
+    const cardNumberGroup = document.getElementById('cardNumberGroup');
+    const cardNumberLabel = document.getElementById('cardNumberLabel');
+    const cardNumberHelp = document.getElementById('cardNumberHelp');
+    const currencySelect = document.querySelector('select[name="currency"]');
+    const previewNumberText = document.getElementById('cardPreviewNumberText');
+    const previewPrefix = document.getElementById('cardPreviewPrefix');
+    const previewName = document.getElementById('cardPreviewName');
+    const previewType = document.getElementById('cardPreviewType');
+    const previewCurrency = document.getElementById('cardPreviewCurrency');
+    const preview = document.getElementById('cardPreview');
+    const previewIcon = document.getElementById('cardPreviewIcon');
+    const colorRadios = Array.from(document.querySelectorAll('input[name="color"]'));
+    const iconRadios = Array.from(document.querySelectorAll('input[name="icon"]'));
+    const iconButtons = Array.from(document.querySelectorAll('.emoji-opt'));
+
+    function formatCardNumber(value) {
+        const digits = String(value || '').replace(/\D/g, '').slice(0, 16);
+        return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+    }
+
+    let namePlaceholderText = '{% t "Karta nomi" %}';
+    let activeTabLabel = '{% t "Bank kartasi" %}';
+
+    function syncNumber() {
+        if (!cardInput || !previewNumberText) return;
+        if (cardInput.disabled) {
+            previewPrefix.textContent = '';
+            previewNumberText.textContent = (activeTabLabel || '{% t "Hisob" %}').toUpperCase();
+            return;
+        }
+        const formatted = formatCardNumber(cardInput.value);
+        cardInput.value = formatted;
+        const typeVal = typeSelect ? typeSelect.value : 'card';
+        if (typeVal === 'card' || typeVal === 'bank') {
+            previewPrefix.textContent = typeVal === 'bank' ? 'ACCT' : '';
+            previewNumberText.textContent = formatted || '#### #### #### ####';
+        } else {
+            previewPrefix.textContent = '';
+            previewNumberText.textContent = (activeTabLabel || '{% t "Hisob" %}').toUpperCase();
+        }
+    }
+
+    function syncName() {
+        if (!previewName || !nameInput) return;
+        const val = (nameInput.value || '').trim();
+        previewName.textContent = val || namePlaceholderText;
+    }
+
+    function syncType() {
+        if (!previewType || !typeSelect) return;
+        previewType.textContent = activeTabLabel || '{% t "Bank kartasi" %}';
+        if (preview) preview.dataset.type = typeSelect.value || 'card';
+        syncNumber();
+    }
+
+    function syncCurrency() {
+        if (!previewCurrency || !currencySelect) return;
+        const val = currencySelect.value || 'UZS';
+        previewCurrency.textContent = val;
+    }
+
+    function hexToRgba(hex, alpha) {
+        if (!hex) return `rgba(59,130,246,${alpha})`;
+        const cleaned = hex.replace('#','');
+        if (cleaned.length !== 6) return `rgba(59,130,246,${alpha})`;
+        const r = parseInt(cleaned.slice(0,2), 16);
+        const g = parseInt(cleaned.slice(2,4), 16);
+        const b = parseInt(cleaned.slice(4,6), 16);
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function syncColor() {
+        if (!preview) return;
+        const selected = colorRadios.find(r => r.checked);
+        const color = selected ? selected.value : '#6366f1';
+        preview.style.background = `linear-gradient(135deg, ${hexToRgba(color, .28)}, ${hexToRgba(color, .12)})`;
+        preview.style.borderColor = hexToRgba(color, .35);
+        if (previewIcon) {
+            previewIcon.style.background = hexToRgba(color, .2);
+            previewIcon.style.borderColor = hexToRgba(color, .45);
+            previewIcon.style.color = color;
+        }
+    }
+
+    function syncIcon() {
+        if (!previewIcon) return;
+        const selected = iconRadios.find(r => r.checked);
+        const icon = selected ? selected.value : 'credit-card';
+        previewIcon.innerHTML = `<i class="ti ti-${icon}" style="font-size:20px;"></i>`;
+        iconButtons.forEach(btn => { btn.style.borderColor = 'transparent'; });
+        if (selected) {
+            const target = selected.nextElementSibling;
+            if (target && target.classList.contains('emoji-opt')) {
+                target.style.borderColor = 'var(--accent)';
+            }
+        }
+    }
+
+    function applyTab(tab) {
+        if (!tab || !typeSelect) return;
+        const type = tab.dataset.type || 'card';
+        typeSelect.value = type;
+        typeTabs.forEach(t => t.classList.toggle('active', t === tab));
+        activeTabLabel = tab.dataset.label || '{% t "Bank kartasi" %}';
+
+        const rawNameLabel = tab.dataset.nameLabel || '{% t "Hisob nomi" %}';
+        const displayLabel = rawNameLabel.endsWith('*') ? rawNameLabel : `${rawNameLabel} *`;
+        namePlaceholderText = rawNameLabel;
+        if (nameLabel) nameLabel.textContent = displayLabel;
+        if (nameInput) nameInput.placeholder = tab.dataset.namePlaceholder || '{% t "Masalan: UzCard, Dollar karta" %}';
+
+        const numberLabelText = tab.dataset.numberLabel || '';
+        const hasNumber = !!numberLabelText;
+        if (cardNumberGroup) cardNumberGroup.style.display = hasNumber ? '' : 'none';
+        if (cardInput) {
+            cardInput.disabled = !hasNumber;
+            if (!hasNumber) cardInput.value = '';
+        }
+        if (hasNumber) {
+            if (cardNumberLabel) cardNumberLabel.textContent = numberLabelText;
+            if (cardNumberHelp) cardNumberHelp.textContent = tab.dataset.numberHelp || '';
+            if (cardInput) cardInput.placeholder = tab.dataset.numberPlaceholder || '';
+        }
+
+        const typeIconMap = {
+            cash: 'wallet',
+            card: 'credit-card',
+            bank: 'building',
+            savings: 'pig-money',
+            investment: 'chart-line',
+            crypto: 'currency-bitcoin',
+        };
+        const nextIcon = typeIconMap[type] || 'credit-card';
+        const iconRadio = iconRadios.find(r => r.value === nextIcon);
+        if (iconRadio) {
+            iconRadio.checked = true;
+        }
+
+        syncType();
+        syncName();
+        syncNumber();
+        syncIcon();
+    }
+
+    if (cardInput) cardInput.addEventListener('input', syncNumber);
+    if (nameInput) nameInput.addEventListener('input', syncName);
+    if (currencySelect) currencySelect.addEventListener('change', syncCurrency);
+    typeTabs.forEach(tab => tab.addEventListener('click', () => applyTab(tab)));
+    colorRadios.forEach(r => r.addEventListener('change', syncColor));
+    iconRadios.forEach(r => r.addEventListener('change', syncIcon));
+
+    const initialType = typeSelect ? typeSelect.value : 'card';
+    const initialTab = typeTabs.find(t => t.dataset.type === initialType) || typeTabs[0];
+    if (initialTab) applyTab(initialTab);
+    syncCurrency();
+    syncColor();
+    syncIcon();
+})();
+</script>
+{% endblock %}
