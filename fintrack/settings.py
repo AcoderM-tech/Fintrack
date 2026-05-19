@@ -47,10 +47,7 @@ SECRET_KEY = _raw_secret
 
 DEBUG = _env_bool("DEBUG", True)
 
-_allowed_raw = os.getenv("ALLOWED_HOSTS", "")
-ALLOWED_HOSTS = [h.strip() for h in _allowed_raw.split(",") if h.strip()] if _allowed_raw else (
-    ["127.0.0.1", "localhost"] if DEBUG else []
-)
+ALLOWED_HOSTS = ['fintrack-wmc6.onrender.com', 'localhost', '127.0.0.1']
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
